@@ -1,16 +1,24 @@
 #ifndef COMMON_HH
 #define COMMON_HH
 
-#include <string>
 #include <vector>
 #include <list>
 #include <map>
 #include <array>
 #include <numeric>
-#include <cmath>
 #include <queue>
 #include <unordered_set>
+#include <string>
+
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include <istream>
+
+#include<algorithm>
+#include <cmath>
+#include <typeinfo>
+
 
 #ifdef _WIN32
 #    ifdef LIBRARY_EXPORTS
@@ -41,6 +49,17 @@ readInputStream()
         lines.push_back( line );
 
     return lines;
+}
+
+auto split( const std::string &s , char delim  )
+{
+    std::stringstream ss( s );
+    std::vector< std::string > tokens;
+    std::string token;
+    while( std::getline( ss , token , delim ))
+        tokens.push_back( token );
+
+    return tokens;
 }
 
 }
@@ -190,13 +209,13 @@ skewDiagram( const std::string &sequence , char c1 = 'G', char c2 = 'C' )
     {
         if( sequence[ i ] == c1 && ++skewness > max.second )
         {
-                max.second = skewness ;
-                max.first.clear();
+            max.second = skewness ;
+            max.first.clear();
         }
         else if( sequence[ i ] == c2 && --skewness < min.second )
         {
-                min.second = skewness ;
-                min.first.clear();
+            min.second = skewness ;
+            min.first.clear();
         }
 
         if ( skewness == max.second )
@@ -208,6 +227,37 @@ skewDiagram( const std::string &sequence , char c1 = 'G', char c2 = 'C' )
     return std::make_pair( min , max );
 }
 
+/**
+ * @brief minimumCoinsChange
+ * The Change Problem
+ * Find the minimum number of coins needed to make change.
+ * @param value
+ * An integer money
+ * @param domination
+ * an array Coins of positive integers.
+ * @return The minimum number of coins with denominations Coins that changes money.
+ */
+int
+minimumCoinsChange( int value , const std::list< int > &domination )
+{
+    std::vector< int > sortedDomination( domination.begin() , domination.end());
+    std::sort( sortedDomination.begin() , sortedDomination.end());
+    std::vector< int > minCount( value + 1 , std::numeric_limits< int >::max());
+    minCount[ 0 ] = 0;
+    for( auto money = 1 ; money <= value ; money++ )
+    {
+        auto count = std::numeric_limits< int >::max();
+        for( auto coin : sortedDomination )
+        {
+            auto remainder = money - coin;
+            if( remainder < 0  ) break;
+            else if( 1 + minCount[ remainder ] < count )
+                    count = 1 + minCount[ remainder ];
+        }
+        minCount[ money ] = count;
+    }
+    return minCount[ value ];
+}
 
 std::list< std::string >
 frequentWordsBruteForce( const std::string &sequence , int kmer , int distance );
