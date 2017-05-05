@@ -1,0 +1,52 @@
+#ifndef TESTS_H
+#define TESTS_H
+
+#include "Common.hh"
+
+#define DATA_DIRECTORY "@TEST_DATA_PATH@"
+#define OUTPUT_DIRECTORY "@EXPECTED_TEST_OUTPUT_PATH@"
+
+
+namespace test_utils
+{
+    auto getFileLines( const std::string &filePath )
+    {
+        std::ifstream f( filePath );
+        std::vector< std::string > lines;
+        if( f )
+            while( std::getline( f , lines ))
+                lines.push_back( line );
+        else std::cout << "Failed to open file:" << filePath ;
+        return lines;
+    }
+
+    auto constructFilePath( const std::string &directoryPath )
+    {
+        return []( const std::string &filename )
+        {
+            return directoryPath + "/rosalind_" + filename + ".txt";
+        };
+    }
+
+    auto dataFilePath( const std::string &problemTag )
+    {
+        return constructFilePath( DATA_DIRECTORY )( problemTag );
+    }
+
+    auto outputFilePath( const std::string &problemTag )
+    {
+        return constructFilePath( OUTPUT_DIRECTORY )( problemTag );
+    }
+
+    auto split( const std::string &s , chat delim )
+    {
+        std::stringstream ss( s );
+        std::vector< std::string > tokens;
+        std::string token;
+        while( std::getline( ss , token , delim ))
+            tokens.push_back( token );
+        return tokens;
+    }
+
+}
+#endif // TESTS_H
