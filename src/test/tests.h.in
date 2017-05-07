@@ -1,10 +1,6 @@
 #ifndef TESTS_H
 #define TESTS_H
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <istream>
+
 #include "Common.hh"
 
 #define DATA_DIRECTORY "@TEST_DATA_PATH@"

@@ -1,28 +1,23 @@
 ## Dependencies
-include( Qt )
+#include( Qt )
 include_directories( ../common )
 
-## ba1e: FindingClumps
-set( FINDING_CLUMPS_EXE "ba1e_FindingClumps" )
-set( FINDING_CLUMPS_SOURCE_FILES
-    ba1e_FindingClumps.cpp)
-
-##  ba1f: MinimumSkew
-set( MINIMUM_SKEW_EXE "ba1f_MinimumSkew" )
-set( MINIMUM_SKEW_SOURCE_FILES
-    ba1f_MinimumSkew.cpp)
-
-## ba5a: MinCoinsChange
-set( MINIMUM_COINS_CHANGE_EXE "ba5a_MinCoinsChange")
-set( MINIMUM_COINS_CHANGE_SOURCE_FILES
-    ba5a_MinCoinsChange.cpp)
-
-
 ### Generate the executable
-add_executable( ${FINDING_CLUMPS_EXE} ${FINDING_CLUMPS_SOURCE_FILES})
-add_executable( ${MINIMUM_SKEW_EXE} ${MINIMUM_SKEW_SOURCE_FILES})
-add_executable( ${MINIMUM_COINS_CHANGE_EXE} ${MINIMUM_COINS_CHANGE_SOURCE_FILES})
+add_executable( ba1a_PatternCount                       ba1a_PatternCount.cpp                       )
+add_executable( ba1b_MostFrequentWords                  ba1b_MostFrequentWords.cpp                  )
+add_executable( ba1c_ComplementSequence                 ba1c_ComplementSequence.cpp                 )
+add_executable( ba1d_PatternMatching                    ba1d_PatternMatching.cpp                    )
+add_executable( ba1e_FindingClumps                      ba1e_FindingClumps.cpp                      )
+add_executable( ba1f_MinimumSkew                        ba1f_MinimumSkew.cpp                        )
+add_executable( ba1g_HammingDistance                    ba1g_HammingDistance.cpp                    )
+add_executable( ba1h_ApproximatePatternMatching         ba1h_ApproximatePatternMatching.cpp         )
+add_executable( ba1i_MostFrequentWordsWithMismatches    ba1i_MostFrequentWordsWithMismatches.cpp    )
+
+add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
+
+
+
 
 
 # Install the executable (generate with 'make install' in the bin directory)
-install( TARGETS ${FINDING_CLUMPS_EXE} DESTINATION bin )
+#install( TARGETS ${FINDING_CLUMPS_EXE} DESTINATION bin )

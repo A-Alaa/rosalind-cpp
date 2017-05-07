@@ -1,24 +1,31 @@
 #ifndef COMMON_HH
 #define COMMON_HH
 
+// STL containers
 #include <vector>
 #include <list>
-#include <map>
 #include <array>
 #include <numeric>
 #include <queue>
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
+#include <unordered_map>
 
+// STL streaming
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <istream>
 
-#include<algorithm>
+// STL misc
+#include <algorithm>
 #include <cmath>
 #include <typeinfo>
+#include <functional>
+#include <cassert>
 
+// Qt
+//#include <QString>
+//#include <QStringRef>
 
 #ifdef _WIN32
 #    ifdef LIBRARY_EXPORTS
@@ -40,7 +47,7 @@ namespace rosalind
 namespace io
 {
 
-std::vector<std::string>
+std::vector< std::string >
 readInputStream()
 {
     std::string line;
@@ -58,8 +65,20 @@ auto split( const std::string &s , char delim  )
     std::string token;
     while( std::getline( ss , token , delim ))
         tokens.push_back( token );
-
     return tokens;
+}
+
+template< typename Container = std::vector< std::string  >>
+std::string join( const Container &container ,
+                  const std::string &sep )
+{
+    auto binaryJoin =  [sep]( const std::string &a , const std::string &b ) -> std::string
+    {
+        return a + ((a.length() > 0) ? sep : "") + b;
+    };
+
+    return std::accumulate( container.begin() , container.end() ,
+                            std::string() , binaryJoin );
 }
 
 }
@@ -72,7 +91,7 @@ const std::size_t byteCapacity =
         std::numeric_limits< char >::max() - std::numeric_limits< char >::min();
 
 const std::array< char , 4 > agtc = { 'A' , 'G' , 'T' , 'C' };
-const std::array< char , 4 > tcag = { 'T' , 'T' , 'A' , 'G' };
+const std::array< char , 4 > tcag = { 'T' , 'C' , 'A' , 'G' };
 const std::array< int , byteCapacity > codeAGTC([]{
     std::array< int , byteCapacity > codes;
     std::generate_n( codes.begin() , byteCapacity , [](){ return -1;});
@@ -83,9 +102,220 @@ const std::array< int , byteCapacity > codeAGTC([]{
     return codes;
 }());
 
+using IndexType = std::size_t;
+using CodeType = std::size_t;
+using CountType = std::size_t;
+using UnsignedIntegerType = unsigned int;
+using GradientType = int;
+using RosalindIOType = std::vector< std::string >;
+//using SubString = QStringRef;
+//using String = QString;
+
+template< typename T >
+auto powi( T base , uint16_t exponent )
+{
+    static_assert( std::numeric_limits< T >::is_integer ,
+                   "exponent must be of integer type.");
+    if( exponent == 0 ) return T( 1 );
+    return T( base ) * powi( base , exponent - 1 );
+}
+
+/**
+ * @brief extractKmers
+ * @param text
+ * @param k
+ * @return
+ */
+std::vector< std::string > extractKmers( const std::string &text , int k )
+{
+    std::vector< std::string > kmers;
+    int n = text.length();
+    for ( auto i = 0 ; i < n-k+1 ; i++ )
+        kmers.push_back( text.substr( i , k ));
+    return kmers;
+}
+
+/**
+ * @brief decode
+ * @param code
+ * @param k
+ * @return
+ */
+std::string decode( CodeType code , int k ){
+    std::string s( k , 0 );
+    for( auto i = 0 ; i < k ; i++ )
+    {
+        s[ k - i - 1 ] = agtc[ code % 4 ];
+        code /= 4;
+    }
+    return s;
+}
+
+/**
+ * @brief encode
+ * @param sequence
+ * @return
+ */
+CodeType encode( const std::string &sequence )
+{
+    CodeType code = 0;
+    for( const auto c : sequence )
+        code = code * 4 + codeAGTC[ c ];
+    return code;
+}
 
 
 /**
+ * ba1a
+ * @brief patternCount
+ * @param sequence
+ * @param pattern
+ * @return
+ */
+auto
+patternCount( const std::string &sequence , const std::string &pattern )
+{
+    CountType count = 0 ;
+    IndexType nextIdx = sequence.find( pattern );
+    while( nextIdx != std::string::npos )
+    {
+        count++;
+        nextIdx = sequence.find( pattern , nextIdx + 1 );
+    }
+    return count;
+}
+
+/**
+ * ba1b
+ * @brief frequentWordsBruteForce
+ * Find the most frequent k-mers in a string.
+ * We say that Pattern is a most frequent k-mer in Text
+ * if it maximizes Count(Text, Pattern) among all k-mers.
+ * For example, "ACTAT" is a most frequent 5-mer in "ACAACTATGCATCACTATCGGGAACTATCCT",
+ * and "ATA" is a most frequent 3-mer of "CGATATATCCATAG".
+ * @param sequence
+ * A string to look for frequent words in.
+ * @param k
+ * Kmers fixed size of interest.
+ * @return
+ * Most frequent kmers.
+ */
+std::list< std::string >
+frequentWordsBruteForce( const std::string &sequence , int k )
+{
+    std::unordered_map< std::string , int > frequency;
+    const auto kmers = extractKmers( sequence , k );
+    for( auto &kmer : kmers )
+        frequency[ kmer ]++;
+
+    std::list< std::string > mostFrequentKmers;
+    int maxFrequency = 0;
+    for( auto &kmer : frequency )
+    {
+        if( kmer.second > maxFrequency )
+        {
+            mostFrequentKmers.clear();
+            maxFrequency = kmer.second;
+        }
+        if( kmer.second == maxFrequency )
+            mostFrequentKmers.push_back( kmer.first );
+    }
+    return mostFrequentKmers;
+}
+
+/**
+ * @brief frequentWordsBruteForce
+ * @param sequence
+ */
+auto
+frequentWordsBruteForce( const RosalindIOType &inputStrings )
+{
+    return frequentWordsBruteForce( inputStrings[ 0 ] ,
+            std::atoi( inputStrings[ 1 ].c_str( )));
+}
+
+/**
+ * ba1c
+ * @brief complementSequence
+ * Find the reverse complement of a DNA string.
+ *
+ * In DNA strings, symbols 'A' and 'T' are complements of each other,
+ * as are 'C' and 'G'. Given a nucleotide p, we denote its complementary
+ * nucleotide as p. The reverse complement of a DNA string
+ * Pattern = p1…pn is the string Pattern = pn … p1 formed by
+ * taking the complement of each nucleotide in Pattern,
+ * then reversing the resulting string.
+ * For example, the reverse complement of
+ * Pattern = "GTCA" is Pattern = "TGAC".
+ * @param sequence
+ * The sequence to find its complement.
+ * @return
+ * The complemented sequence.
+ */
+std::string
+complementSequence( const std::string &sequence )
+{
+    auto i = sequence.size();
+    std::string complement( sequence.size() , 0 );
+    for( auto c : sequence )
+        complement[ --i ] = tcag[ codeAGTC[ c ]];
+    return complement;
+}
+
+
+/**
+ * ba1c
+ * @brief complementSequence2
+ * @param sequence
+ * @return
+ */
+std::string
+complementSequence2( const std::string &sequence )
+{
+    std::string complement;
+    std::transform( sequence.rbegin() , sequence.rend() ,
+                    std::back_inserter( complement ) ,
+                    []( char c ){ return tcag[ codeAGTC[ c ]];});
+    return complement;
+}
+
+
+std::vector<std::string>
+complementSequences( const std::vector<std::string> &sequences )
+{
+    std::vector< std::string > complemented;
+    std::transform( std::begin( sequences ) , std::end( sequences ) ,
+                    std::inserter( complemented , std::begin( complemented )) ,
+                    complementSequence );
+    return complemented;
+}
+
+/**
+ * ba1d
+ * @brief patternMatching
+ * Find all occurrences of a pattern in a string.
+ * @param sequence
+ * The big sequence where to look for the pattern.
+ * @param pattern
+ * The pattern to search in sequence.
+ * @return
+ * vector of indices corresponds to occurances of pattern in sequence.
+ */
+std::vector< IndexType >
+patternMatching( const std::string &sequence , const std::string &pattern )
+{
+    std::vector< IndexType > occurances;
+    auto nextIndex = sequence.find( pattern );
+    while( nextIndex != std::string::npos )
+    {
+        occurances.push_back( nextIndex );
+        nextIndex = sequence.find( pattern , nextIndex + 1 );
+    }
+    return occurances;
+}
+
+/**
+ * BA1E
  * @brief findClumps
  * Given integers L and t, a string Pattern forms an (L, t)-clump inside a
  * (larger) string Genome if there is an interval of Genome of length L in which
@@ -107,49 +337,39 @@ const std::array< int , byteCapacity > codeAGTC([]{
  * @return
  * kmers forming clumps as string of vectors.
  */
-std::list<std::string>
+std::list< std::string >
 findClumps( const std::string &input ,
-            int k ,
-            int windowSize ,
-            int threshold )
+            unsigned int k ,
+            unsigned int windowSize ,
+            unsigned int threshold )
 {
-    auto decode = [k]( uint64_t code ){
-        std::string s( k , 0 );
-        int i=0;
-        for( auto i = 0 ; i < k ; i++ ){
-            s[ k - i - 1 ] = agtc[ code % 4 ];
-            code /= 4;
-        }
-        return s;
-    };
-
-    std::deque< uint64_t > window ;
-    std::unordered_set< uint64_t > occurance;
-    std::vector< int > occuranceSpace;
+    std::deque< IndexType > window ;
+    std::unordered_set< IndexType > occurance;
+    std::vector< CountType > occuranceSpace;
     try{
-        occuranceSpace = std::vector< int >( std::pow( 4 , k ) , 0 );
+        occuranceSpace = std::vector< CountType >( powi( 4 , k ) , 0 );
     } catch( const std::bad_alloc &e )
     {
         std::cout << e.what();
         exit( EXIT_FAILURE );
     }
 
-    uint64_t sequenceCode = 0;
-    const uint64_t mask = static_cast< uint64_t >( std::pow( 4 , k-1 ));
+    CodeType sequenceCode = 0;
+    const CodeType mask = powi( 4 , k-1 );
     auto wholeSequence = input.c_str();
-    for( auto i = 0; i < k - 1 ; i++ )
+
+    for( IndexType i = 0; i < k - 1 ; i++ )
         sequenceCode = sequenceCode*4 + codeAGTC[ wholeSequence[ i ]];
 
-    for( auto i = k - 1 ; i < input.size() ; i++ ){
+    for( IndexType i = k - 1 ; i < input.size() ; i++ )
+    {
         sequenceCode = ( sequenceCode % mask ) * 4 + codeAGTC[wholeSequence[i]];
         window.push_back( sequenceCode );
-
         if( i >= windowSize )
         {
             occuranceSpace[ window.front() ]--;
             window.pop_front();
         }
-
         if( ++occuranceSpace[ sequenceCode ] >= threshold )
         {
             occuranceSpace[ sequenceCode ] = 0;
@@ -159,33 +379,27 @@ findClumps( const std::string &input ,
     std::list< std::string > frequentWords;
     std::transform( std::begin( occurance ) , std::end( occurance ) ,
                     std::inserter( frequentWords , std::end( frequentWords )) ,
-                    decode );
+                    std::bind( decode , std::placeholders::_1 , k ));
     return frequentWords;
 }
 
-
-std::string
-complementSequence( const std::string &sequence )
+/**
+ * @brief findClumps
+ * @param input
+ */
+auto
+findClumps( const RosalindIOType &input )
 {
-    auto i = sequence.size();
-    std::string complement;
-    for( auto c : sequence )
-        complement[ --i ] = tcag[ codeAGTC[ c ]];
-    return complement;
+    auto parameters = rosalind::io::split( input[1] , ' ');
+    assert( parameters.size() == 3 );
+    return findClumps( input[ 0 ] ,
+            atoi( parameters[0].c_str( )) ,
+            atoi( parameters[1].c_str( )) ,
+            atoi( parameters[2].c_str( )));
 }
-
-std::vector<std::string>
-complementSequences( const std::vector<std::string> &sequences )
-{
-    std::vector< std::string > complemented( sequences.size());
-    std::transform( std::begin( sequences ) , std::end( sequences ) ,
-                    std::inserter( complemented , std::begin( complemented )) ,
-                    complementSequence );
-    return complemented;
-}
-
 
 /**
+ * BA1F
  * @brief skewDiagram
  * Define the skew of a DNA string Genome, denoted Skew(Genome),
  * as the difference between the total number of occurrences of
@@ -201,11 +415,11 @@ complementSequences( const std::vector<std::string> &sequences )
 auto
 skewDiagram( const std::string &sequence , char c1 = 'G', char c2 = 'C' )
 {
-    using peak = std::pair< std::list< int > , int >;
+    using peak = std::pair< std::list< IndexType > , int >;
     peak min( {} , std::numeric_limits< int >::max());
     peak max( {} , std::numeric_limits< int >::min());
     int skewness = 0;
-    for( auto i = 0 ; i < sequence.size() ; i++ )
+    for( IndexType i = 0 ; i < sequence.size() ; i++ )
     {
         if( sequence[ i ] == c1 && ++skewness > max.second )
         {
@@ -228,42 +442,194 @@ skewDiagram( const std::string &sequence , char c1 = 'G', char c2 = 'C' )
 }
 
 /**
+ * ba1g
+ * @brief hammingDistance
+ * Compute the Hamming distance between two DNA strings.
+ * We say that position i in k-mers p1 … pk and q1 … qk is
+ * a mismatch if pi ≠ qi. For example, CGAAT and CGGAC have
+ *  two mismatches. The number of mismatches between
+ * strings p and q is called the Hamming distance between
+ * these strings and is denoted HammingDistance(p, q).
+ * @param s1
+ * @param s2
+ * @return
+ * An integer value representing the Hamming distance.
+ */
+CountType
+hammingDistance( const std::string &s1 , const std::string &s2 )
+{
+    const auto size = ( s1.size() < s2.size())? s1.size() : s2.size();
+    CountType distance = 0;
+    for( IndexType i = 0 ; i < size ; i++ )
+        distance += s1[ i ] != s2[ i ];
+    return distance;
+}
+
+/**
+ * ba1g
+ * @brief hammingDistance
+ * @param s1
+ * @param s2
+ * @return
+ */
+CountType
+hammingDistance( const char * const s1 , const char * const s2 , size_t size )
+{
+    CountType distance = 0;
+    for( IndexType i = 0 ; i < size ; i++ )
+        distance += s1[ i ] != s2[ i ];
+    return distance;
+}
+
+
+/**
+ * ba1h
+ * @brief approximatePatternMatching
+ * Find all approximate occurrences of a pattern in a string.
+ * We say that a k-mer Pattern appears as a substring of Text
+ * with at most d mismatches if there is some k-mer substring
+ * Pattern' of Text having d or fewer mismatches with Pattern,
+ * i.e., HammingDistance(Pattern, Pattern') ≤ d. Our observation
+ * that a DnaA box may appear with slight variations leads to the
+ * following generalization of the Pattern Matching Problem.
+ * @param sequence
+ * @param pattern
+ * @param distance
+ * @return
+ * All starting positions where Pattern appears as a substring of Text with at most d mismatches.
+ */
+std::vector< IndexType >
+approximatePatternMatching( const std::string &sequence ,
+                            const std::string &pattern ,
+                            CountType distance = 0 )
+{
+    assert( sequence.size() >= pattern.size());
+    std::vector< IndexType > indices;
+    const auto size = pattern.size();
+    const IndexType indexSpace = sequence.size() - pattern.size();
+    auto cSequence = sequence.c_str();
+    auto cPattern  = pattern .c_str();
+    for( IndexType i = 0 ; i < indexSpace + 1 ; i++ )
+        if( hammingDistance( cSequence + i , cPattern , size ) <= distance )
+            indices.push_back( i );
+    return indices;
+}
+
+/**
+ * ba1i
+ * @brief frequentWordsWithMismatches
+ * Find the most frequent k-mers with mismatches in a string.
+ * Given strings Text and Pattern as well as an integer d,
+ * we define Countd(Text, Pattern) as the total number of
+ * occurrences of Pattern in Text with at most d mismatches.
+ * For example, Count1(AACAAGCTGATAAACATTTAAAGAG, AAAAA) = 4
+ * because AAAAA appears four times in this string with at most
+ * one mismatch: AACAA, ATAAA, AAACA, and AAAGA. Note that two of
+ * these occurrences overlap.
+ * A most frequent k-mer with up to d mismatches in Text
+ * is simply a string Pattern maximizing Countd(Text, Pattern)
+ * among all k-mers. Note that Pattern does not need to actually
+ * appear as a substring of Text; for example, AAAAA is the most
+ * frequent 5-mer with 1 mismatch in AACAAGCTGATAAACATTTAAAGAG,
+ * even though AAAAA does not appear exactly in this string.
+ *
+ * @param sequence
+ * @param k
+ * Kmers fixed size.
+ * @param d
+ * Maximum distance to consider an approximate match.
+ * @return
+ * All most frequent k-mers with up to d mismatches in sequence.
+ */
+std::list< std::string >
+frequentWordsWithMismatches( const std::string &sequence ,
+                             unsigned int k , unsigned int d )
+{
+    auto cSequence = sequence.c_str();
+    std::pair< std::list< std::string > , int > mostFrequentKmers;
+    const CodeType kmerSpace = static_cast< CodeType >( std::pow( 4 , k ));
+    for( IndexType i = 0 ; i < kmerSpace ; i++ )
+    {
+        int occurance = 0;
+        auto kmer = decode( i , k );
+        auto cKmer = kmer.c_str();
+        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; j++ )
+            if( hammingDistance( cSequence + j , cKmer , k ) <= d )
+                occurance++;
+        if( occurance > mostFrequentKmers.second )
+        {
+            mostFrequentKmers.second = occurance;
+            mostFrequentKmers.first.clear();
+        }
+        if( occurance == mostFrequentKmers.second )
+            mostFrequentKmers.first.push_back( kmer );
+    }
+    return mostFrequentKmers.first;
+}
+
+auto
+frequentWordsWithMismatches( const RosalindIOType &inputStrings  )
+{
+    auto parameters = rosalind::io::split( inputStrings[1] , ' ');
+    int k = atoi( parameters[0].c_str());
+    int d = atoi( parameters[1].c_str());
+    return frequentWordsWithMismatches( inputStrings[0] , k , d );
+}
+
+/**
+ * BA5A
  * @brief minimumCoinsChange
  * The Change Problem
  * Find the minimum number of coins needed to make change.
  * @param value
  * An integer money
  * @param domination
- * an array Coins of positive integers.
+ * an array Coins of sorted positive integers.
  * @return The minimum number of coins with denominations Coins that changes money.
  */
-int
-minimumCoinsChange( int value , const std::list< int > &domination )
+auto
+minimumCoinsChange( int value , const std::vector< int > &domination )
 {
-    std::vector< int > sortedDomination( domination.begin() , domination.end());
-    std::sort( sortedDomination.begin() , sortedDomination.end());
-    std::vector< int > minCount( value + 1 , std::numeric_limits< int >::max());
+    std::vector< CountType > minCount( value + 1 ,
+                                       std::numeric_limits< CountType >::max());
     minCount[ 0 ] = 0;
     for( auto money = 1 ; money <= value ; money++ )
     {
-        auto count = std::numeric_limits< int >::max();
-        for( auto coin : sortedDomination )
+        auto min = std::numeric_limits< CountType >::max();
+        for( auto coin : domination )
         {
             auto remainder = money - coin;
             if( remainder < 0  ) break;
-            else if( 1 + minCount[ remainder ] < count )
-                    count = 1 + minCount[ remainder ];
+            else if( 1 + minCount[ remainder ] < min )
+                min = 1 + minCount[ remainder ];
         }
-        minCount[ money ] = count;
+        minCount[ money ] = min;
     }
     return minCount[ value ];
 }
 
-std::list< std::string >
-frequentWordsBruteForce( const std::string &sequence , int kmer , int distance );
+/**
+ * BA5A
+ * @brief minimumCoinsChange
+ * @param money
+ * @param domination
+ * @param delim
+ * @return
+ */
+auto
+minimumCoinsChange( const RosalindIOType &input )
+{
+    auto money = std::atoi( input[0].c_str() );
+    auto _domination = rosalind::io::split( input[1] , ',' );
+    std::vector< int > __domination;
+    std::transform( std::begin( _domination ) , std::end( _domination ) ,
+                    std::inserter( __domination , std::begin( __domination )) ,
+                    []( const std::string &s ){ return std::atoi( s.c_str());} );
+    std::sort( __domination.begin() , __domination.end());
+    return minimumCoinsChange( money , __domination );
+}
 
-int
-distance( const std::string &s1 , const std::string &s2 );
+
 
 
 }

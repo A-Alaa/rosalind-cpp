@@ -3,7 +3,7 @@ set( ROSALIND_LIB "rosalind" )
 
 
 ### Library sources/headers
-set( ROSALIND_LIB_SOURCE_FILES )
+set( ROSALIND_LIB_SOURCE_FILES  )
 
 set( ROSALIND_LIB_HEADER_FILES
     common/Common.hh
