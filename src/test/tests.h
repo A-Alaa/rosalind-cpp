@@ -3,8 +3,8 @@
 
 #include "Common.hh"
 
-#define DATA_DIRECTORY "@TEST_DATA_PATH@"
-#define OUTPUT_DIRECTORY "@EXPECTED_TEST_OUTPUT_PATH@"
+#define DATA_DIRECTORY "E:/repo/rosalind-algorithms/rosalind-algorithms/data"
+#define OUTPUT_DIRECTORY "E:/repo/rosalind-algorithms/rosalind-algorithms/output"
 
 
 namespace test_utils

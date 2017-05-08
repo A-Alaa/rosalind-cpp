@@ -4,8 +4,7 @@
 int main(int argc, char *argv[])
 {
     auto input = rosalind::io::readInputStream();
-    auto occurances = rosalind::basic::patternMatching( input );
-    for( auto idx : occurances )
-        std::cout << idx << " ";
+    for( auto frequency : rosalind::basic::stringFrequencyArray( input ))
+        std::cout << frequency << " ";
     return 0;
 }

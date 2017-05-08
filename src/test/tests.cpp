@@ -16,6 +16,16 @@ TEST_CASE("Basic Utilities")
 
         REQUIRE( rosalind::io::join({},",") == "");
     }
+
+    SECTION("Set Based Equality: check the contents "
+            "equality of two containers regardless the order of elements.")
+    {
+        using namespace test_utils;
+        using V = std::vector< int >;
+        REQUIRE( setBasedEquality( V{1,3,2} , V{3,1,2} ));
+        REQUIRE( setBasedEquality( V{3,3,3,1} , V{1,3,1} , false ));
+        REQUIRE(!setBasedEquality( V{3,2} , V{3,4} ));
+    }
 }
 
 TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
@@ -32,29 +42,40 @@ TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
     {
         auto inputLines = getFileLines( dataFilePath("ba1b"));
 
-        auto actualOutput =
+        auto actual =
                 rosalind::basic::frequentWordsBruteForce( inputLines );
-        auto expectedOutput =
+        auto expected =
                 rosalind::io::split( getFileLines(
                                          outputFilePath( "ba1b" ))[0] , ' ');
-        const auto expected = std::set< std::string >( expectedOutput.begin() ,
-                                                       expectedOutput.end());
-        const auto actual   = std::set< std::string >( actualOutput.begin() ,
-                                                       actualOutput.end());
 
         REQUIRE( expected.size() == actual.size());
         REQUIRE( actual.size() != 0 );
-        REQUIRE( expected == actual );
+        REQUIRE( setBasedEquality( actual , expected ));
     }
 
     SECTION("BA1C: Complement Sequence")
     {
         auto inputLines = getFileLines( dataFilePath("ba1c"));
+        auto expected = getFileLines(outputFilePath( "ba1c" ))[0];
+        auto actual = rosalind::basic::complementSequence( inputLines[0] );
+        auto actual2 = rosalind::basic::complementSequence2( inputLines[0] );
+        REQUIRE( expected == actual );
+        REQUIRE( expected == actual2 );
     }
 
     SECTION("BA1D: Pattern Matching")
     {
         auto inputLines = getFileLines( dataFilePath("ba1d"));
+        auto _expected =
+                rosalind::io::split( getFileLines(
+                                         outputFilePath( "ba1d" ))[0] , ' ');
+
+        auto actual = rosalind::basic::patternMatching( inputLines );
+        decltype( actual ) expected;
+        std::transform( _expected.begin() , _expected.end() ,
+                        std::inserter( expected , expected.begin()) ,
+                        []( const std::string &s ) { return std::atoi( s.c_str()); } );
+        REQUIRE( expected == actual );
     }
 
     SECTION( "BA1E: Finding Clumps Problem" )
@@ -70,16 +91,9 @@ TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
                 rosalind::io::split( getFileLines(
                                          outputFilePath( "ba1e" ))[0] , ' ');
         auto actualOutput   =
-                rosalind::basic::findClumps( inputSequence ,
-                                             std::atoi( parametersStr[0].c_str( )) ,
-                std::atoi( parametersStr[1].c_str( )) ,
-                std::atoi( parametersStr[2].c_str( )));
+                rosalind::basic::findClumps( inputLines );
 
-        const auto expected = std::set< std::string >( expectedOutput.begin() ,
-                                                       expectedOutput.end());
-        const auto actual   = std::set< std::string >( actualOutput.begin() ,
-                                                       actualOutput.end());
-        REQUIRE( expected == actual );
+        REQUIRE( setBasedEquality( expectedOutput , actualOutput ));
     }
 
     SECTION( "BA1F: Find a Position in a Genome Minimizing the Skew")
@@ -101,6 +115,89 @@ TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
         auto actual = std::set< int >( _.begin() , _.end());
 
         REQUIRE( actual == expected );
+    }
+
+    SECTION( "BA1G: Hamming Distance" )
+    {
+        auto input = getFileLines( test_utils::dataFilePath("ba1g"));
+        auto expected = atoi( getFileLines( test_utils::outputFilePath("ba1g"))[0].c_str());
+        using namespace rosalind::basic;
+        REQUIRE( hammingDistance( input[0] , input[1] ) == expected );
+        REQUIRE( hammingDistance( input[0].c_str() , input[1].c_str() , input[0].size() ) ==
+                expected );
+    }
+
+    SECTION( "BA1H: Approximate Pattern Matching" )
+    {
+        auto input = getFileLines( dataFilePath("ba1h"));
+        auto actual = rosalind::basic::approximatePatternMatching( input );
+
+        auto _expected =
+                rosalind::io::split( getFileLines(
+                                         outputFilePath( "ba1h" ))[0] , ' ');
+
+        decltype( actual ) expected;
+        std::transform( _expected.begin() , _expected.end() ,
+                        std::inserter( expected , expected.begin()) ,
+                        []( const std::string &s ) { return std::atoi( s.c_str()); } );
+        REQUIRE( expected == actual );
+    }
+
+    SECTION( "BA1I: Most Frequent Words With Mismatches")
+    {
+        auto input = getFileLines( dataFilePath("ba1i"));
+        auto actual = rosalind::basic::frequentWordsWithMismatches( input );
+        auto expected =
+                rosalind::io::split( getFileLines(
+                                         outputFilePath( "ba1i" ))[0] , ' ');
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
+
+    SECTION( "BA1J: Most Frequent Words With Mismatches And Reverse Complement" )
+    {
+        auto input = getFileLines( dataFilePath("ba1j"));
+        auto actual = rosalind::basic::frequentWordsWithMismatchesAndReverseComplement( input );
+        auto expected =
+                rosalind::io::split( getFileLines(
+                                         outputFilePath( "ba1j" ))[0] , ' ');
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
+
+    SECTION( "BA1K: String Frequency Array")
+    {
+        auto input = getFileLines( dataFilePath("ba1k"));
+        auto actual = rosalind::basic::stringFrequencyArray( input );
+        auto _expected =
+                rosalind::io::split( getFileLines(
+                                         outputFilePath( "ba1k" ))[0] , ' ');
+
+        decltype( actual ) expected;
+        std::transform( _expected.begin() , _expected.end() ,
+                        std::inserter( expected , expected.begin()) ,
+                        []( const std::string &s ) { return std::atoi( s.c_str()); } );
+        REQUIRE( expected == actual );
+    }
+
+    SECTION( "BA1L")
+    {
+        auto input = getFileLines( dataFilePath("ba1l"));
+        auto actual = rosalind::basic::encode( input );
+        auto expected = std::atoll( getFileLines( outputFilePath( "ba1l" ))[0].c_str());
+        REQUIRE( actual == expected );
+    }
+
+    SECTION( "BA1M")
+    {
+        auto input = getFileLines( dataFilePath("ba1m"));
+        auto actual = rosalind::basic::numberToPattern( input );
+        auto expected = getFileLines( outputFilePath( "ba1m" ))[0];
+        REQUIRE( actual == expected );
+    }
+
+    SECTION( "BA1N")
+    {
+//        auto input = getFileLines( dataFilePath("ba1n"));
+
     }
 
     SECTION( "BA5A: Find the minimum number of coins needed to make change.")

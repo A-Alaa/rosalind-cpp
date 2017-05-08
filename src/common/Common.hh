@@ -68,17 +68,17 @@ auto split( const std::string &s , char delim  )
     return tokens;
 }
 
-template< typename Container = std::vector< std::string  >>
+
+template< typename Container = std::vector< std::string >>
 std::string join( const Container &container ,
                   const std::string &sep )
 {
-    auto binaryJoin =  [sep]( const std::string &a , const std::string &b ) -> std::string
+    auto binaryJoinString = [sep]( const std::string &a , const std::string &b ) -> std::string
     {
-        return a + ((a.length() > 0) ? sep : "") + b;
+        return  a + ((a.length() > 0) ? sep : "") +  b ;
     };
-
     return std::accumulate( container.begin() , container.end() ,
-                            std::string() , binaryJoin );
+                            std::string() , binaryJoinString  );
 }
 
 }
@@ -90,26 +90,23 @@ namespace basic
 const std::size_t byteCapacity =
         std::numeric_limits< char >::max() - std::numeric_limits< char >::min();
 
-const std::array< char , 4 > agtc = { 'A' , 'G' , 'T' , 'C' };
-const std::array< char , 4 > tcag = { 'T' , 'C' , 'A' , 'G' };
-const std::array< int , byteCapacity > codeAGTC([]{
+const std::array< char , 4 > acgt = { 'A' , 'C' , 'G' , 'T' };
+const std::array< char , 4 > tgca = { 'T' , 'G' , 'C' , 'A' };
+const std::array< int , byteCapacity > codeACGT([]{
     std::array< int , byteCapacity > codes;
     std::generate_n( codes.begin() , byteCapacity , [](){ return -1;});
     codes['A'] = 0;
-    codes['G'] = 1;
-    codes['T'] = 2;
-    codes['C'] = 3;
+    codes['C'] = 1;
+    codes['G'] = 2;
+    codes['T'] = 3;
     return codes;
 }());
 
 using IndexType = std::size_t;
 using CodeType = std::size_t;
 using CountType = std::size_t;
-using UnsignedIntegerType = unsigned int;
-using GradientType = int;
 using RosalindIOType = std::vector< std::string >;
-//using SubString = QStringRef;
-//using String = QString;
+
 
 template< typename T >
 auto powi( T base , uint16_t exponent )
@@ -136,32 +133,60 @@ std::vector< std::string > extractKmers( const std::string &text , int k )
 }
 
 /**
+ * ba1m
  * @brief decode
+ * Convert an integer to its corresponding DNA string.
  * @param code
  * @param k
  * @return
+ * NumberToPattern(index, k).
  */
-std::string decode( CodeType code , int k ){
+template< typename T >
+std::string decode( T code , int k ){
     std::string s( k , 0 );
     for( auto i = 0 ; i < k ; i++ )
     {
-        s[ k - i - 1 ] = agtc[ code % 4 ];
+        s[ k - i - 1 ] = acgt[ code % 4 ];
         code /= 4;
     }
     return s;
 }
 
 /**
- * @brief encode
- * @param sequence
- * @return
+ * @brief decode
+ * @param input
  */
-CodeType encode( const std::string &sequence )
+template< typename T = CodeType >
+auto numberToPattern( const RosalindIOType &input ){
+    return decode< T >(
+                std::atoll( input[0].c_str( )) , std::atoi( input[1].c_str( )));
+}
+
+/**
+ * ba1l
+ * @brief encode
+ * Convert a DNA string to a number.
+ * @param pattern
+ * @return
+ * PatternToNumber(Pattern).
+ */
+template< typename T = CodeType >
+T encode( const std::string &pattern )
 {
-    CodeType code = 0;
-    for( const auto c : sequence )
-        code = code * 4 + codeAGTC[ c ];
+    T code = 0;
+    for( const auto c : pattern )
+        code = code * 4 + codeACGT[ c ];
     return code;
+}
+
+/**
+ * @brief encode
+ * @param input
+ */
+auto
+encode( const RosalindIOType &input )
+{
+    return encode< uint64_t >( input[0] );
 }
 
 
@@ -183,6 +208,12 @@ patternCount( const std::string &sequence , const std::string &pattern )
         nextIdx = sequence.find( pattern , nextIdx + 1 );
     }
     return count;
+}
+
+auto
+patternCount( const RosalindIOType &input )
+{
+    return patternCount( input[0] , input[1] );
 }
 
 /**
@@ -258,7 +289,7 @@ complementSequence( const std::string &sequence )
     auto i = sequence.size();
     std::string complement( sequence.size() , 0 );
     for( auto c : sequence )
-        complement[ --i ] = tcag[ codeAGTC[ c ]];
+        complement[ --i ] = tgca[ codeACGT[ c ]];
     return complement;
 }
 
@@ -275,7 +306,7 @@ complementSequence2( const std::string &sequence )
     std::string complement;
     std::transform( sequence.rbegin() , sequence.rend() ,
                     std::back_inserter( complement ) ,
-                    []( char c ){ return tcag[ codeAGTC[ c ]];});
+                    []( char c ){ return tgca[ codeACGT[ c ]];});
     return complement;
 }
 
@@ -312,6 +343,16 @@ patternMatching( const std::string &sequence , const std::string &pattern )
         nextIndex = sequence.find( pattern , nextIndex + 1 );
     }
     return occurances;
+}
+
+/**
+ * @brief patternMatching
+ * @param input
+ */
+auto
+patternMatching( const RosalindIOType &input )
+{
+    return patternMatching( input[1] , input[0] );
 }
 
 /**
@@ -359,11 +400,11 @@ findClumps( const std::string &input ,
     auto wholeSequence = input.c_str();
 
     for( IndexType i = 0; i < k - 1 ; i++ )
-        sequenceCode = sequenceCode*4 + codeAGTC[ wholeSequence[ i ]];
+        sequenceCode = sequenceCode*4 + codeACGT[ wholeSequence[ i ]];
 
     for( IndexType i = k - 1 ; i < input.size() ; i++ )
     {
-        sequenceCode = ( sequenceCode % mask ) * 4 + codeAGTC[wholeSequence[i]];
+        sequenceCode = ( sequenceCode % mask ) * 4 + codeACGT[wholeSequence[i]];
         window.push_back( sequenceCode );
         if( i >= windowSize )
         {
@@ -379,7 +420,7 @@ findClumps( const std::string &input ,
     std::list< std::string > frequentWords;
     std::transform( std::begin( occurance ) , std::end( occurance ) ,
                     std::inserter( frequentWords , std::end( frequentWords )) ,
-                    std::bind( decode , std::placeholders::_1 , k ));
+                    std::bind( decode< CodeType > , std::placeholders::_1 , k ));
     return frequentWords;
 }
 
@@ -515,6 +556,13 @@ approximatePatternMatching( const std::string &sequence ,
     return indices;
 }
 
+auto
+approximatePatternMatching( const RosalindIOType &input )
+{
+    return rosalind::basic::approximatePatternMatching(
+                input[1] , input[0] ,  atoi( input[2].c_str() ));
+}
+
 /**
  * ba1i
  * @brief frequentWordsWithMismatches
@@ -554,8 +602,8 @@ frequentWordsWithMismatches( const std::string &sequence ,
         auto kmer = decode( i , k );
         auto cKmer = kmer.c_str();
         for( IndexType j = 0 ; j < sequence.size() - k + 1 ; j++ )
-            if( hammingDistance( cSequence + j , cKmer , k ) <= d )
-                occurance++;
+            occurance += hammingDistance( cSequence + j , cKmer , k ) <= d;
+
         if( occurance > mostFrequentKmers.second )
         {
             mostFrequentKmers.second = occurance;
@@ -574,6 +622,95 @@ frequentWordsWithMismatches( const RosalindIOType &inputStrings  )
     int k = atoi( parameters[0].c_str());
     int d = atoi( parameters[1].c_str());
     return frequentWordsWithMismatches( inputStrings[0] , k , d );
+}
+
+
+/**
+ * ba1j
+ * @brief frequentWordsWithMismatchesAndReverseComplement
+ * Find the most frequent k-mers (with mismatches and reverse complements) in a DNA string.
+ * @param sequence
+ * @param k
+ * @param d
+ * @return
+ * All k-mers Pattern maximizing the
+ * sum Countd(Text, Pattern) + Countd(Text, Pattern)
+ * over all possible k-mers.
+ */
+std::list< std::string >
+frequentWordsWithMismatchesAndReverseComplement(
+        const std::string &sequence ,
+        unsigned int k , unsigned int d )
+{
+    auto cSequence = sequence.c_str();
+    std::pair< std::list< std::string > , int > mostFrequentKmers;
+    const CodeType kmerSpace = powi( 4 , k );
+    for( IndexType i = 0 ; i < kmerSpace ; i++ )
+    {
+        int occurance = 0;
+        auto kmer = decode( i , k );
+        auto rKmer = rosalind::basic::complementSequence( kmer );
+        auto cKmer = kmer.c_str();
+        auto crKmer = rKmer.c_str();
+
+        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; j++ )
+        {
+            occurance += hammingDistance( cSequence + j , cKmer , k ) <= d;
+            occurance += hammingDistance( cSequence + j , crKmer , k ) <= d ;
+        }
+        if( occurance > mostFrequentKmers.second )
+        {
+            mostFrequentKmers.second = occurance;
+            mostFrequentKmers.first.clear();
+        }
+        if( occurance == mostFrequentKmers.second )
+            mostFrequentKmers.first.push_back( kmer );
+    }
+    return mostFrequentKmers.first;
+}
+
+/**
+ * @brief frequentWordsWithMismatches
+ * @param inputStrings
+ */
+auto
+frequentWordsWithMismatchesAndReverseComplement( const RosalindIOType &inputStrings  )
+{
+    auto parameters = rosalind::io::split( inputStrings[1] , ' ');
+    int k = atoi( parameters[0].c_str());
+    int d = atoi( parameters[1].c_str());
+    return frequentWordsWithMismatchesAndReverseComplement( inputStrings[0] , k , d );
+}
+
+/**
+ * @brief stringFrequencyArray
+ * Given an integer k, we define the frequency array of a string
+ * Text as an array of length 4k, where the i-th element of the array
+ * holds the number of times that the i-th k-mer (in the lexicographic order)
+ * appears in Text
+ * @param sequence
+ * @param k
+ * @return
+ * The frequency array of k-mers in Text.
+ */
+std::vector< CountType >
+stringFrequencyArray( const std::string & sequence , unsigned int k )
+{
+    auto kmerSpace = powi( 4 , k );
+    std::vector< CountType > frequencyArray( kmerSpace , 0 );
+    for( const auto &kmer : extractKmers( sequence , k ))
+        frequencyArray[ encode( kmer )]++;
+    return frequencyArray;
+}
+
+/**
+ * @brief stringFrequencyArray
+ * @param input
+ */
+auto
+stringFrequencyArray( const RosalindIOType &input )
+{
+    return stringFrequencyArray( input[0] , atoi( input[1].c_str( )));
 }
 
 /**

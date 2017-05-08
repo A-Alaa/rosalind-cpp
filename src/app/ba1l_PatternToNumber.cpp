@@ -4,8 +4,6 @@
 int main(int argc, char *argv[])
 {
     auto input = rosalind::io::readInputStream();
-    auto occurances = rosalind::basic::patternMatching( input );
-    for( auto idx : occurances )
-        std::cout << idx << " ";
+    std::cout << rosalind::basic::encode< uint64_t >( input[0] );
     return 0;
 }
