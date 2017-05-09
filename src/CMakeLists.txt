@@ -6,13 +6,13 @@ set( ROSALIND_LIB "rosalind" )
 set( ROSALIND_LIB_SOURCE_FILES  )
 
 set( ROSALIND_LIB_HEADER_FILES
-    common/Common.hh
+    common/ba1.hpp
     common/catch.hpp )
 
 
 ### Include directories.
 include_directories( . )
-include_directories( common )
+include_directories( algorithm )
 include_directories( catch )
 
 

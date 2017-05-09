@@ -1,121 +1,13 @@
-#ifndef COMMON_HH
-#define COMMON_HH
+#ifndef BA1_HPP
+#define BA1_HPP
 
-// STL containers
-#include <vector>
-#include <list>
-#include <array>
-#include <numeric>
-#include <queue>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
-
-// STL streaming
-#include <iostream>
-#include <sstream>
-#include <fstream>
-
-// STL misc
-#include <algorithm>
-#include <cmath>
-#include <typeinfo>
-#include <functional>
-#include <cassert>
-
-// Qt
-//#include <QString>
-//#include <QStringRef>
-
-#ifdef _WIN32
-#    ifdef LIBRARY_EXPORTS
-#        define LIBRARY_API __declspec(dllexport)
-#    else
-#        define LIBRARY_API __declspec(dllimport)
-#    endif
-#elif
-#    define LIBRARY_API
-#endif
-
-#define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
-
+#include "common.hpp"
 
 namespace rosalind
 {
-
-
-namespace io
+namespace ba1
 {
 
-std::vector< std::string >
-readInputStream()
-{
-    std::string line;
-    std::vector< std::string > lines;
-    while( std::getline( std::cin , line ))
-        lines.push_back( line );
-
-    return lines;
-}
-
-auto split( const std::string &s , char delim  )
-{
-    std::stringstream ss( s );
-    std::vector< std::string > tokens;
-    std::string token;
-    while( std::getline( ss , token , delim ))
-        tokens.push_back( token );
-    return tokens;
-}
-
-
-template< typename Container = std::vector< std::string >>
-std::string join( const Container &container ,
-                  const std::string &sep )
-{
-    auto binaryJoinString = [sep]( const std::string &a , const std::string &b ) -> std::string
-    {
-        return  a + ((a.length() > 0) ? sep : "") +  b ;
-    };
-    return std::accumulate( container.begin() , container.end() ,
-                            std::string() , binaryJoinString  );
-}
-
-}
-
-
-namespace basic
-{
-
-const std::size_t byteCapacity =
-        std::numeric_limits< char >::max() - std::numeric_limits< char >::min();
-
-const std::array< char , 4 > acgt = { 'A' , 'C' , 'G' , 'T' };
-const std::array< char , 4 > tgca = { 'T' , 'G' , 'C' , 'A' };
-const std::array< int , byteCapacity > codeACGT([]{
-    std::array< int , byteCapacity > codes;
-    std::generate_n( codes.begin() , byteCapacity , [](){ return -1;});
-    codes['A'] = 0;
-    codes['C'] = 1;
-    codes['G'] = 2;
-    codes['T'] = 3;
-    return codes;
-}());
-
-using IndexType = std::size_t;
-using CodeType = std::size_t;
-using CountType = std::size_t;
-using RosalindIOType = std::vector< std::string >;
-
-
-template< typename T >
-auto powi( T base , uint16_t exponent )
-{
-    static_assert( std::numeric_limits< T >::is_integer ,
-                   "exponent must be of integer type.");
-    if( exponent == 0 ) return T( 1 );
-    return T( base ) * powi( base , exponent - 1 );
-}
 
 /**
  * @brief extractKmers
@@ -293,7 +185,6 @@ complementSequence( const std::string &sequence )
     return complement;
 }
 
-
 /**
  * ba1c
  * @brief complementSequence2
@@ -309,7 +200,6 @@ complementSequence2( const std::string &sequence )
                     []( char c ){ return tgca[ codeACGT[ c ]];});
     return complement;
 }
-
 
 std::vector<std::string>
 complementSequences( const std::vector<std::string> &sequences )
@@ -522,7 +412,6 @@ hammingDistance( const char * const s1 , const char * const s2 , size_t size )
     return distance;
 }
 
-
 /**
  * ba1h
  * @brief approximatePatternMatching
@@ -559,7 +448,7 @@ approximatePatternMatching( const std::string &sequence ,
 auto
 approximatePatternMatching( const RosalindIOType &input )
 {
-    return rosalind::basic::approximatePatternMatching(
+    return rosalind::ba1::approximatePatternMatching(
                 input[1] , input[0] ,  atoi( input[2].c_str() ));
 }
 
@@ -624,7 +513,6 @@ frequentWordsWithMismatches( const RosalindIOType &inputStrings  )
     return frequentWordsWithMismatches( inputStrings[0] , k , d );
 }
 
-
 /**
  * ba1j
  * @brief frequentWordsWithMismatchesAndReverseComplement
@@ -649,7 +537,7 @@ frequentWordsWithMismatchesAndReverseComplement(
     {
         int occurance = 0;
         auto kmer = decode( i , k );
-        auto rKmer = rosalind::basic::complementSequence( kmer );
+        auto rKmer = rosalind::ba1::complementSequence( kmer );
         auto cKmer = kmer.c_str();
         auto crKmer = rKmer.c_str();
 
@@ -683,6 +571,7 @@ frequentWordsWithMismatchesAndReverseComplement( const RosalindIOType &inputStri
 }
 
 /**
+ * ba1k
  * @brief stringFrequencyArray
  * Given an integer k, we define the frequency array of a string
  * Text as an array of length 4k, where the i-th element of the array
@@ -711,6 +600,55 @@ auto
 stringFrequencyArray( const RosalindIOType &input )
 {
     return stringFrequencyArray( input[0] , atoi( input[1].c_str( )));
+}
+
+/**
+ * ba1n
+ * @brief dNeighborhood
+ * The d-neighborhood Neighbors(Pattern, d) is the set of
+ * all k-mers whose Hamming distance from Pattern does not exceed d.
+ * @param sequence
+ * @param d
+ * @return
+ * The collection of strings Neighbors(Pattern, d).
+ */
+std::list< std::string >
+dNeighborhood( const std::string &sequence , unsigned int d )
+{
+    std::unordered_set< std::string > mutants;
+    std::function<void(std::string, unsigned int,std::vector< bool >)> mutantsGenerator;
+    mutantsGenerator = [&mutants,&mutantsGenerator]( const std::string &sequence ,
+            unsigned int height , std::vector< bool > conserved )
+    {
+        mutants.insert( sequence );
+        if( height > 0 )
+        {
+            for( IndexType i = 0, until = sequence.size() ; i < until ; i++)
+            {
+                if( conserved[ i ] ) continue;
+                else conserved[ i ] = true;
+                std::string mutant = sequence;
+                for( auto c : bpMutants[ codeACGT[ sequence[ i ]]])
+                {
+                    mutant[ i ] = c;
+                    mutantsGenerator( mutant , height - 1 , conserved );
+                }
+            }
+        }
+    };
+    mutantsGenerator( sequence , d , std::vector< bool >( sequence.size() , false ));
+    return std::list< std::string >( mutants.begin() , mutants.end());
+}
+
+/**
+ * @brief dNeighborhood
+ * @param input
+ */
+auto
+dNeighborhood( const RosalindIOType &input )
+{
+    return dNeighborhood( input[0] ,
+            std::atoi( input[1].c_str()));
 }
 
 /**
@@ -766,10 +704,7 @@ minimumCoinsChange( const RosalindIOType &input )
     return minimumCoinsChange( money , __domination );
 }
 
-
-
-
+}
 }
 
-}
-#endif // COMMON_HH
+#endif // BA1_HPP

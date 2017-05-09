@@ -1,7 +1,7 @@
 #ifndef TESTS_H
 #define TESTS_H
 
-#include "Common.hh"
+#include "ba1.hpp"
 
 #define DATA_DIRECTORY "@TEST_DATA_PATH@"
 #define OUTPUT_DIRECTORY "@EXPECTED_TEST_OUTPUT_PATH@"

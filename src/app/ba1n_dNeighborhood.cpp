@@ -1,10 +1,10 @@
-#include "Common.hh"
+#include "ba1.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[])
 {
     auto input = rosalind::io::readInputStream();
-    for( auto frequency : rosalind::basic::stringFrequencyArray( input ))
-        std::cout << frequency << " ";
+    for( const auto &mutant : rosalind::ba1::dNeighborhood( input ))
+        std::cout << mutant << std::endl;
     return 0;
 }
