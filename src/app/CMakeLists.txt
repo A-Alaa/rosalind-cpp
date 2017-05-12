@@ -21,6 +21,7 @@ add_executable( ba1n_dNeighborhood                      ba1n_dNeighborhood.cpp  
 add_executable( ba2a_MotifEnumeration                   ba2a_MotifEnumeration.cpp )
 add_executable( ba2b_MedianKmer                         ba2b_MedianKmer.cpp )
 add_executable( ba2c_ProfileMostProbableKmer            ba2c_ProfileMostProbableKmer.cpp            )
+add_executable( ba2d_GreedyMotifSearch                  ba2d_GreedyMotifSearch.cpp                  )
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 
 

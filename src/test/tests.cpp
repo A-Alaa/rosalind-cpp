@@ -242,5 +242,13 @@ TEST_CASE("Finding Motifs Algorithms","[BA2]")
         auto expected = getFileLines( outputFilePath("ba2b"));
         REQUIRE( expected[0] == actual );
     }
+
+    SECTION("BA2C: Profile-most probable kmer")
+    {
+        auto input = getFileLines( dataFilePath("ba2c"));
+        auto actual = rosalind::ba2::profileMostProbableKmer( input );
+        auto expected = getFileLines( outputFilePath("ba2c"));
+        REQUIRE( expected[0] == actual );
+    }
 }
 

@@ -3,6 +3,7 @@
 int main(int argc, char *argv[])
 {
     auto input = rosalind::io::readInputStream();
-    std::cout << rosalind::ba2::medianKmer( input ) << std::endl;
+    for( const auto &motif : rosalind::ba2::greedyMotifSearch( input ))
+        std::cout << motif << std::endl;
     return 0;
 }

@@ -8,6 +8,64 @@ namespace rosalind
 namespace ba2
 {
 
+std::string
+consensus( const std::vector< std::string > &kmers )
+{
+    assert( !kmers.empty());
+    const unsigned int k = kmers[0].size();
+    const unsigned int t = kmers.size();
+    assert( std::all_of( kmers.begin() , kmers.end() ,
+                         [k]( const std::string &s){ return s.length() == k; }));
+
+    std::vector< std::array< CountType , 4 >> frequency( k , {});
+    for( const auto &kmer : kmers )
+        for( unsigned int i = 0 ; i < k ; i++ )
+            frequency[i][ codeACGT[ kmer[ i ]]]++;
+    std::string consensus;
+    std::transform( std::begin( frequency ) , std::end( frequency ) ,
+                    std::inserter( consensus , consensus.end()) ,
+                    []( const std::array< CountType , 4 > &histo )
+    {
+        return acgt[ std::max_element( histo.begin() , histo.end()) - histo.begin()];
+    });
+    return consensus;
+}
+
+std::string
+consensus( const std::vector< std::array< CountType , 4 >> &profile )
+{
+    assert( !profile.empty());
+    std::string consensus;
+    std::transform( std::begin( profile ) , std::end( profile ) ,
+                    std::inserter( consensus , consensus.end()) ,
+                    []( const std::array< CountType , 4 > &histo )
+    {
+        return acgt[ std::max_element( histo.begin() , histo.end()) - histo.begin()];
+    });
+    return consensus;
+}
+
+std::vector< std::array< float , 4 >>
+makeProfile( const std::vector< std::string > &kmers )
+{
+    assert( !kmers.empty());
+    const unsigned int k = kmers[0].size();
+    const unsigned int t = kmers.size();
+
+    assert( std::all_of( kmers.begin() , kmers.end() ,
+                         [k]( const std::string &s){ return s.length() == k; }));
+
+    std::vector< std::array< float , 4 >> profile( k , {} );
+    for( const auto &kmer : kmers )
+        for( IndexType i = 0 ; i < k ; i++ )
+            profile[i][ codeACGT[ kmer[ i ]]]++;
+
+    for( auto &histo : profile )
+        for( float &value : histo )
+            value /= t;
+
+    return profile;
+}
 
 /**
  * ba2a
@@ -157,6 +215,10 @@ profileMostProbableKmer( const std::string &sequence ,
     return kmers[ maxIndex ];
 }
 
+/**
+ * @brief profileMostProbableKmer
+ * @param input
+ */
 auto
 profileMostProbableKmer( const RosalindIOType &input )
 {
@@ -177,6 +239,71 @@ profileMostProbableKmer( const RosalindIOType &input )
                              std::strtof( t[i].c_str() , 0 )});
 
     return profileMostProbableKmer( sequence , profile );
+}
+
+/**
+ * ba2d
+ * @brief greedyMotifSearch
+ * @param sequences
+ * @param k
+ * @return
+ */
+std::vector< std::string >
+greedyMotifSearch( const std::vector< std::string > &sequences ,
+                   unsigned int k )
+{
+    const unsigned int t = sequences.size();
+    assert( t > 1 );
+    std::vector< std::vector< std::string >> kmers;
+    std::transform( std::begin( sequences ) , std::end( sequences ) ,
+                    std::inserter( kmers , std::end( kmers )) ,
+                    [k]( const std::string &sequence ){ return ba1::extractKmers( sequence , k );});
+
+    auto score = []( const std::vector< std::string > &kmers )
+    {
+        auto consensusMotif = consensus( kmers );
+        return std::accumulate( std::begin( kmers ) , std::end( kmers ) ,
+                                0 , [consensusMotif]( unsigned int a , const std::string &kmer ){
+            return a + ba1::hammingDistance( consensusMotif , kmer );
+        });
+    };
+
+    unsigned int bestScore = std::numeric_limits< int >::max();
+    std::vector< std::string > bestMotifs;
+    for( const auto &line : kmers )
+        bestMotifs.push_back( line[0] );
+
+    for( const auto &motif : kmers[0] )
+    {
+        decltype( bestMotifs ) motifs;
+        motifs.push_back( motif );
+        for( unsigned int j = 1 ; j < t ; j++ )
+        {
+            using V = std::vector< std::string >;
+            auto profile = makeProfile( V( motifs.begin() ,
+                                           motifs.begin() + j ));
+            motifs.push_back( profileMostProbableKmer( sequences[ j ] , profile ));
+        }
+        unsigned int motifsScore = score( motifs );
+        if( motifsScore < bestScore )
+        {
+            bestScore = motifsScore;
+            bestMotifs = motifs;
+        }
+    }
+    return bestMotifs;
+}
+
+/**
+ * @brief greedyMotifSearch
+ * @param input
+ */
+auto
+greedyMotifSearch( const RosalindIOType &input )
+{
+    const unsigned int k = std::atoi( io::split( input[0] , ' ')[0].c_str());
+    return greedyMotifSearch( std::vector< std::string >( input.begin() + 1 ,
+                                                          input.end()) , k );
 }
 }
 }
