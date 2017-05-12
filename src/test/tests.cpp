@@ -250,5 +250,13 @@ TEST_CASE("Finding Motifs Algorithms","[BA2]")
         auto expected = getFileLines( outputFilePath("ba2c"));
         REQUIRE( expected[0] == actual );
     }
+
+    SECTION("BA2D: Greedy Motif Search")
+    {
+        auto input = getFileLines( dataFilePath("ba2d"));
+        auto actual = rosalind::ba2::greedyMotifSearch( input );
+        auto expected = getFileLines( outputFilePath("ba2d"));
+        REQUIRE( expected == actual );
+    }
 }
 
