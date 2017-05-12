@@ -2,6 +2,7 @@
 #define TESTS_H
 
 #include "ba1.hpp"
+#include "ba2.hpp"
 
 #define DATA_DIRECTORY "@TEST_DATA_PATH@"
 #define OUTPUT_DIRECTORY "@EXPECTED_TEST_OUTPUT_PATH@"

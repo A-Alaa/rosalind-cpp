@@ -26,6 +26,11 @@ TEST_CASE("Basic Utilities")
         REQUIRE( setBasedEquality( V{3,3,3,1} , V{1,3,1} , false ));
         REQUIRE(!setBasedEquality( V{3,2} , V{3,4} ));
     }
+
+    SECTION("Find with mismatches")
+    {
+        //TODO
+    }
 }
 
 TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
@@ -202,6 +207,7 @@ TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
         REQUIRE( setBasedEquality( actual , expected ));
     }
 
+
     SECTION( "BA5A: Find the minimum number of coins needed to make change.")
     {
         auto input =
@@ -215,5 +221,26 @@ TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
                  expectedOutput );
     }
 
+}
+
+
+TEST_CASE("Finding Motifs Algorithms","[BA2]")
+{
+    using namespace test_utils;
+    SECTION("BA2A: Motif Enumeration")
+    {
+        auto input = getFileLines( dataFilePath("ba2a"));
+        auto actual = rosalind::ba2::motifEnumeration( input );
+        auto expected = getFileLines( outputFilePath("ba2a"));
+        REQUIRE( setBasedEquality( expected , actual ));
+    }
+
+    SECTION("BA2B: Median Kmer")
+    {
+        auto input = getFileLines( dataFilePath("ba2b"));
+        auto actual = rosalind::ba2::medianKmer( input );
+        auto expected = getFileLines( outputFilePath("ba2b"));
+        REQUIRE( expected[0] == actual );
+    }
 }
 
