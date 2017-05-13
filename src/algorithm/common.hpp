@@ -72,6 +72,26 @@ auto powi( T base , uint16_t exponent )
     return T( base ) * powi( base , exponent - 1 );
 }
 
+/**
+ * @brief random_element
+ * credits: http://stackoverflow.com/a/6943003
+ * @param begin
+ * @param end
+ * @return
+ */
+template <typename I>
+I randomElement(I begin, I end)
+{
+    const unsigned long n = std::distance(begin, end);
+    const unsigned long divisor = (RAND_MAX + 1) / n;
+
+    unsigned long k;
+    do { k = std::rand() / divisor; } while (k >= n);
+
+    std::advance(begin, k);
+    return begin;
+}
+
 namespace io
 {
 

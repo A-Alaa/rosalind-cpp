@@ -22,6 +22,11 @@ add_executable( ba2a_MotifEnumeration                   ba2a_MotifEnumeration.cp
 add_executable( ba2b_MedianKmer                         ba2b_MedianKmer.cpp )
 add_executable( ba2c_ProfileMostProbableKmer            ba2c_ProfileMostProbableKmer.cpp            )
 add_executable( ba2d_GreedyMotifSearch                  ba2d_GreedyMotifSearch.cpp                  )
+add_executable( ba2e_GreedyMotifSearchWithPseudoCount   ba2e_GreedyMotifSearchWithPseudoCount.cpp   )
+add_executable( ba2f_RandomizedMotifSearch              ba2f_RandomizedMotifSearch.cpp              )
+add_executable( ba2g_GibbsSampler                       ba2g_GibbsSampler.cpp                       )
+add_executable( ba2h_DistanceBetweenPatternAndStrings   ba2h_DistanceBetweenPatternAndStrings.cpp   )
+
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 
 

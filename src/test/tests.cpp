@@ -258,5 +258,21 @@ TEST_CASE("Finding Motifs Algorithms","[BA2]")
         auto expected = getFileLines( outputFilePath("ba2d"));
         REQUIRE( expected == actual );
     }
+
+    SECTION("BA2E: Greedy Motif Search With Pseudocounts")
+    {
+        auto input = getFileLines( dataFilePath("ba2e"));
+        auto actual = rosalind::ba2::greedyMotifSearchWithPseudoCount( input );
+        auto expected = getFileLines( outputFilePath("ba2e"));
+        REQUIRE( expected == actual );
+    }
+
+    SECTION("BA2F: Randomized Motif Search")
+    {
+        auto input = getFileLines( dataFilePath("ba2f"));
+        auto actual = rosalind::ba2::randomizedMotifSearch( input );
+        auto expected = getFileLines( outputFilePath("ba2f"));
+        REQUIRE( expected == actual );
+    }
 }
 

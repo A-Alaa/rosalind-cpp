@@ -8,6 +8,11 @@ namespace rosalind
 namespace ba2
 {
 
+/**
+ * @brief consensus
+ * @param kmers
+ * @return
+ */
 std::string
 consensus( const std::vector< std::string > &kmers )
 {
@@ -31,6 +36,11 @@ consensus( const std::vector< std::string > &kmers )
     return consensus;
 }
 
+/**
+ * @brief consensus
+ * @param profile
+ * @return
+ */
 std::string
 consensus( const std::vector< std::array< CountType , 4 >> &profile )
 {
@@ -45,8 +55,15 @@ consensus( const std::vector< std::array< CountType , 4 >> &profile )
     return consensus;
 }
 
+/**
+ * @brief makeProfile
+ * @param kmers
+ * @param pseudoCount
+ * @return
+ */
 std::vector< std::array< float , 4 >>
-makeProfile( const std::vector< std::string > &kmers )
+makeProfile( const std::vector< std::string > &kmers ,
+             float pseudoCount = 0 )
 {
     assert( !kmers.empty());
     const unsigned int k = kmers[0].size();
@@ -62,7 +79,7 @@ makeProfile( const std::vector< std::string > &kmers )
 
     for( auto &histo : profile )
         for( float &value : histo )
-            value /= t;
+            value = ( value + pseudoCount ) / t;
 
     return profile;
 }
@@ -250,7 +267,8 @@ profileMostProbableKmer( const RosalindIOType &input )
  */
 std::vector< std::string >
 greedyMotifSearch( const std::vector< std::string > &sequences ,
-                   unsigned int k )
+                   unsigned int k ,
+                   float pseudoCount = 0 )
 {
     const unsigned int t = sequences.size();
     assert( t > 1 );
@@ -281,7 +299,8 @@ greedyMotifSearch( const std::vector< std::string > &sequences ,
         {
             using V = std::vector< std::string >;
             auto profile = makeProfile( V( motifs.begin() ,
-                                           motifs.begin() + j ));
+                                           motifs.begin() + j ) ,
+                                        pseudoCount );
             motifs.push_back( profileMostProbableKmer( sequences[ j ] , profile ));
         }
         unsigned int motifsScore = score( motifs );
@@ -295,6 +314,7 @@ greedyMotifSearch( const std::vector< std::string > &sequences ,
 }
 
 /**
+ *
  * @brief greedyMotifSearch
  * @param input
  */
@@ -304,6 +324,120 @@ greedyMotifSearch( const RosalindIOType &input )
     const unsigned int k = std::atoi( io::split( input[0] , ' ')[0].c_str());
     return greedyMotifSearch( std::vector< std::string >( input.begin() + 1 ,
                                                           input.end()) , k );
+}
+
+/**
+ * ba2e
+ * @brief greedyMotifSearchWithPseudoCount
+ * @param input
+ */
+auto
+greedyMotifSearchWithPseudoCount( const RosalindIOType &input )
+{
+    const unsigned int k = std::atoi( io::split( input[0] , ' ')[0].c_str());
+    return greedyMotifSearch( std::vector< std::string >( input.begin() + 1 ,
+                                                          input.end()) , k , 1.f );
+}
+
+/**
+ * ba2f
+ * @brief randomizedMotifSearch
+ * We will now turn to randomized algorithms that
+ * flip coins and roll dice in order to search for
+ *  motifs. Making random algorithmic decisions may
+ *  sound like a disastrous idea; just imagine a chess
+ *  game in which every move would be decided by rolling
+ *  a die. However, an 18th Century French mathematician
+ *  and naturalist, Comte de Buffon, first proved that
+ * randomized algorithms are useful by randomly dropping
+ * needles onto parallel strips of wood and using the results
+ * of this experiment to accurately approximate the constant π.
+ * Randomized algorithms may be nonintuitive because they
+ * lack the control of traditional algorithms. Some randomized
+ * algorithms are Las Vegas algorithms, which deliver solutions
+ * that are guaranteed to be exact, despite the fact that they
+ * rely on making random decisions. Yet most randomized algorithms
+ *  are Monte Carlo algorithms. These algorithms are not guaranteed
+ * to return exact solutions, but they do quickly find approximate
+ * solutions. Because of their speed, they can be run many times,
+ * allowing us to choose the best approximation from thousands of runs.
+ * @param sequences
+ * @param k
+ * @param pseudoCount
+ * @return
+ * A collection BestMotifs resulting from running RandomizedMotifSearch(Dna, k, t)
+ * 1000 times. Remember to use pseudocounts!
+ */
+std::vector< std::string >
+randomizedMotifSearch( const std::vector< std::string > &sequences ,
+                       unsigned int k ,
+                       unsigned int runs = 1000,
+                       float pseudoCount = 1.f )
+{
+    const unsigned int t = sequences.size();
+    assert( t > 1 );
+    std::vector< std::vector< std::string >> kmers;
+    std::transform( std::begin( sequences ) , std::end( sequences ) ,
+                    std::inserter( kmers , std::end( kmers )) ,
+                    [k]( const std::string &sequence ){ return ba1::extractKmers( sequence , k );});
+
+    auto score = []( const std::vector< std::string > &kmers )
+    {
+        auto consensusMotif = consensus( kmers );
+        return std::accumulate( std::begin( kmers ) , std::end( kmers ) ,
+                                0 , [consensusMotif]( unsigned int a , const std::string &kmer ){
+            return a + ba1::hammingDistance( consensusMotif , kmer );
+        });
+    };
+
+    auto bestScore = std::numeric_limits< int >::max();
+    using MotifsType = std::vector< std::string > ;
+    MotifsType bestMotifs;
+    for( unsigned int i = 0 ; i < runs ; i++ )
+    {
+        MotifsType oldMotifs;
+        std::transform( std::begin( kmers ) , std::end( kmers ) ,
+                        std::inserter( oldMotifs , oldMotifs.end()) ,
+                        []( const MotifsType &line ){
+            return *randomElement( line.begin() , line.end());
+        });
+
+        bool converging = true;
+        while( converging )
+        {
+            auto profile = makeProfile( oldMotifs , pseudoCount );
+            MotifsType newMotifs;
+            std::transform( std::begin( sequences ) , std::end( sequences ) ,
+                            std::inserter( newMotifs , newMotifs.end()) ,
+                            [&profile]( const std::string &sequence ){
+                return profileMostProbableKmer( sequence , profile );
+            });
+            auto oldScore = score( oldMotifs );
+            auto newScore = score( newMotifs );
+            if(( converging = newScore < oldScore ))
+                oldMotifs = newMotifs;
+        }
+
+        auto currentScore = score( oldMotifs );
+        if( currentScore < bestScore )
+        {
+            bestScore = currentScore;
+            bestMotifs = oldMotifs;
+        }
+    }
+    return bestMotifs;
+}
+
+/**
+ * @brief randomizedMotifSearch
+ * @param input
+ */
+auto
+randomizedMotifSearch( const RosalindIOType &input )
+{
+    const unsigned int k = std::atoi( io::split( input[0] , ' ')[0].c_str());
+    return randomizedMotifSearch( std::vector< std::string >( input.begin() + 1 ,
+                                                              input.end()) , k , 1000 , 1.f );
 }
 }
 }
