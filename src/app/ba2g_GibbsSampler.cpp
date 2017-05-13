@@ -1,9 +1,10 @@
-#include "ba1.hpp"
+#include "ba2.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[])
 {
     auto input = rosalind::io::readInputStream();
-    std::cout << rosalind::ba1::minimumCoinsChange( input );
+    for( const auto &motif : rosalind::ba2::gibbsSampler( input ))
+        std::cout << motif << std::endl;
     return 0;
 }

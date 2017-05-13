@@ -274,5 +274,25 @@ TEST_CASE("Finding Motifs Algorithms","[BA2]")
         auto expected = getFileLines( outputFilePath("ba2f"));
         REQUIRE( expected == actual );
     }
+
+    SECTION("BA2G: Gibbs Sampler Motif Finding")
+    {
+        auto input = getFileLines( dataFilePath("ba2g"));
+        auto actual = rosalind::ba2::gibbsSampler( input );
+        auto expected = getFileLines( outputFilePath("ba2g"));
+
+        CAPTURE( rosalind::ba2::hammingDistanceScore( actual ));
+        CAPTURE( rosalind::ba2::hammingDistanceScore( expected ));
+
+        REQUIRE( expected == actual );
+    }
+
+    SECTION("BA2H: Distance Between Pattern And Strings")
+    {
+        auto input = getFileLines( dataFilePath("ba2h"));
+        auto actual = rosalind::ba2::minimalHammingDistance( input );
+        auto expected = atoi( getFileLines( outputFilePath("ba2h"))[0].c_str());
+        REQUIRE( expected == actual );
+    }
 }
 

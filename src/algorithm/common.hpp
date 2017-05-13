@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include <iterator>
 
 // STL streaming
 #include <iostream>
@@ -91,6 +92,7 @@ I randomElement(I begin, I end)
     std::advance(begin, k);
     return begin;
 }
+
 
 namespace io
 {
