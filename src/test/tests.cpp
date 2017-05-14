@@ -296,3 +296,87 @@ TEST_CASE("Finding Motifs Algorithms","[BA2]")
     }
 }
 
+TEST_CASE("Graph Algorithms","[BA3]")
+{
+    using namespace test_utils;
+    SECTION("BA3a: Find Kmer Composition of String")
+    {
+        auto input = getFileLines( dataFilePath("ba3a"));
+        auto actual = rosalind::ba1::extractKmers( input[1] , atoi( input[0].c_str()));
+        auto expected = getFileLines( outputFilePath("ba3a"));
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
+
+    SECTION("BA3b: String Reconstruction From Kmers")
+    {
+        auto input = getFileLines( dataFilePath("ba3b"));
+        auto actual = rosalind::ba3::reconstructStringFromKmers(
+                    input.cbegin() , input.cend());
+        auto expected = getFileLines( outputFilePath("ba3b"))[0];
+        REQUIRE( actual == expected );
+    }
+
+    SECTION("BA3c: Overlap Strings Graph")
+    {
+        auto input = getFileLines( dataFilePath("ba3c"));
+        auto actual = rosalind::ba3::overlapStringsGraph( input.cbegin() , input.cend());
+        auto expected = getFileLines( outputFilePath("ba3c"));
+        decltype( expected ) _actual;
+        std::transform( std::begin( actual ) , std::end( actual ) ,
+                        std::inserter( _actual , _actual.begin()) ,
+                        []( const std::pair< std::string , std::string > &p )
+        {
+            return p.first + " -> " + p.second;
+        });
+        REQUIRE( setBasedEquality( _actual , expected ));
+    }
+
+    SECTION("BA3d: De Bruijn Overlap Strings Graph")
+    {
+        using P = std::pair< std::string , std::vector< std::string >>;
+        auto input = getFileLines( dataFilePath("ba3d"));
+        auto actual = rosalind::ba3::constructDeBruijnGraph( input );
+
+        auto expected = getFileLines( outputFilePath("ba3d"));
+        decltype( expected ) _actual;
+        std::transform( std::begin( actual ) , std::end( actual ) ,
+                        std::inserter( _actual , _actual.end()) ,
+                        []( const std::pair< std::string , std::vector< std::string >> &p )
+        {
+            auto targets = p.second;
+            if( targets.size() > 1 )
+                std::sort( targets.begin() , targets.end());
+            return p.first + " -> " + rosalind::io::join( targets , ",");
+        });
+
+        CAPTURE( expected.size());
+        CAPTURE( _actual.size());
+        CAPTURE( expected[0]);
+        CAPTURE( _actual[0]);
+        REQUIRE( setBasedEquality( expected , _actual ));
+    }
+
+    SECTION("BA3e: De Bruijn Overlap Strings Graph")
+    {
+        using P = std::pair< std::string , std::vector< std::string >>;
+        auto input = getFileLines( dataFilePath("ba3e"));
+        auto actual = rosalind::ba3::constructDeBruijnGraph( input.cbegin() , input.cend());
+
+        auto expected = getFileLines( outputFilePath("ba3e"));
+        decltype( expected ) _actual;
+        std::transform( std::begin( actual ) , std::end( actual ) ,
+                        std::inserter( _actual , _actual.end()) ,
+                        []( const std::pair< std::string , std::vector< std::string >> &p )
+        {
+            std::vector< std::string > targets = p.second;
+            return p.first + " -> " + rosalind::io::join( targets , ",");
+        });
+
+
+        CAPTURE( expected.size());
+        CAPTURE( _actual.size());
+        CAPTURE( expected[0]);
+        CAPTURE( _actual [0]);
+        REQUIRE(  setBasedEquality( expected , _actual ));
+    }
+}

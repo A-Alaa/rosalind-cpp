@@ -27,6 +27,12 @@ add_executable( ba2f_RandomizedMotifSearch              ba2f_RandomizedMotifSear
 add_executable( ba2g_GibbsSampler                       ba2g_GibbsSampler.cpp                       )
 add_executable( ba2h_DistanceBetweenPatternAndStrings   ba2h_DistanceBetweenPatternAndStrings.cpp   )
 
+add_executable( ba3a_KmerComposition                    ba3a_KmerComposition.cpp                    )
+add_executable( ba3b_StringReconstructionFromKmers      ba3b_StringReconstructionFromKmers.cpp      )
+add_executable( ba3c_OverlapStringsGraph                ba3c_OverlapStringsGraph.cpp                )
+add_executable( ba3d_DeBruijnGraph                      ba3d_DeBruijnGraph.cpp                      )
+add_executable( ba3e_DeBruijnGraph                      ba3e_DeBruijnGraph.cpp                      )
+
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 
 
