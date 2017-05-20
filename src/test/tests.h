@@ -5,8 +5,8 @@
 #include "ba2.hpp"
 #include "ba3.hpp"
 
-#define DATA_DIRECTORY "E:/repo/rosalind-algorithms/rosalind-algorithms/data"
-#define OUTPUT_DIRECTORY "E:/repo/rosalind-algorithms/rosalind-algorithms/output"
+#define DATA_DIRECTORY "/home/asem/GP/rosalind-cpp/data"
+#define OUTPUT_DIRECTORY "/home/asem/GP/rosalind-cpp/output"
 
 
 namespace test_utils

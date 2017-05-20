@@ -38,7 +38,7 @@ consensus( const std::vector< std::string > &kmers )
     assert( std::all_of( kmers.begin() , kmers.end() ,
                          [k]( const std::string &s){ return s.length() == k; }));
 
-    std::vector< std::array< CountType , 4 >> frequency( k , {});
+    std::vector< std::array< CountType , 4 >> frequency( k );
     for( const auto &kmer : kmers )
         for( unsigned int i = 0 ; i < k ; i++ )
             frequency[i][ codeACGT[ kmer[ i ]]]++;
@@ -105,7 +105,7 @@ makeProfile( SeqIt firstIt , SeqIt lastIt ,
     assert( std::all_of( firstIt , lastIt ,
                          [k]( const std::string &s){ return s.length() == k; }));
 
-    std::vector< std::array< float , 4 >> profile( k , {} );
+    std::vector< std::array< float , 4 >> profile( k );
     for( auto it = firstIt ; it != lastIt ; it++ )
         for( IndexType i = 0 ; i < k ; ++i )
             profile[i][ codeACGT[ (*it)[ i ]]]++;
@@ -130,7 +130,7 @@ makeProfileWithException( SeqIt firstIt , SeqIt lastIt ,
     assert( std::all_of( firstIt , lastIt ,
                          [k]( const std::string &s){ return s.length() == k; }));
 
-    std::vector< std::array< float , 4 >> profile( k , {} );
+    std::vector< std::array< float , 4 >> profile( k );
     for( auto it = firstIt ; it != lastIt ; ++it )
         if ( it == exceptIt ) continue;
         else

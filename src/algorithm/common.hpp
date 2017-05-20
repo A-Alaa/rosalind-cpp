@@ -30,17 +30,17 @@
 //#include <QString>
 //#include <QStringRef>
 
-#ifdef _WIN32
-#    ifdef LIBRARY_EXPORTS
-#        define LIBRARY_API __declspec(dllexport)
-#    else
-#        define LIBRARY_API __declspec(dllimport)
-#    endif
-#elif
-#    define LIBRARY_API
-#endif
+//#ifdef _WIN32
+//#    ifdef LIBRARY_EXPORTS
+//#        define LIBRARY_API __declspec(dllexport)
+//#    else
+//#        define LIBRARY_API __declspec(dllimport)
+//#    endif
+//#elif
+//#    define LIBRARY_API
+//#endif
 
-#define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
+//#define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
 
 namespace rosalind
 {
@@ -84,8 +84,9 @@ auto powi( T base , uint16_t exponent )
 template <typename I>
 I randomElement(I begin, I end)
 {
-    const unsigned long n = std::distance(begin, end);
-    const unsigned long divisor = (RAND_MAX + 1) / n;
+    using UIntType = unsigned long;
+    const UIntType n = std::distance(begin, end);
+    const UIntType divisor = (UIntType(RAND_MAX) + 1) / n;
 
     unsigned long k;
     do { k = std::rand() / divisor; } while (k >= n);
@@ -116,6 +117,21 @@ auto split( const std::string &s , char delim  )
     std::string token;
     while( std::getline( ss , token , delim ))
         tokens.push_back( token );
+    return tokens;
+}
+
+auto split( const std::string &s , std::string delim  )
+{
+    std::vector< std::string > tokens;
+    size_t last = 0; size_t next = 0;
+    while ((next = s.find(delim, last )) != std::string::npos)
+    {
+        tokens.push_back( s.substr(last , next - last));
+        last = next + 1;
+    }
+    last += delim.length() - 1;
+    if( last < s.length() )
+        tokens.push_back( s.substr( last , std::string::npos ));
     return tokens;
 }
 

@@ -32,6 +32,8 @@ add_executable( ba3b_StringReconstructionFromKmers      ba3b_StringReconstructio
 add_executable( ba3c_OverlapStringsGraph                ba3c_OverlapStringsGraph.cpp                )
 add_executable( ba3d_DeBruijnGraph                      ba3d_DeBruijnGraph.cpp                      )
 add_executable( ba3e_DeBruijnGraph                      ba3e_DeBruijnGraph.cpp                      )
+add_executable( ba3f_FindEulerianCycle                  ba3f_FindEulerianCycle.cpp                  )
+add_executable( ba3g_FindEulerianPath                   ba3g_FindEulerianPath.cpp                   )
 
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 

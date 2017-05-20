@@ -27,11 +27,23 @@ TEST_CASE("Basic Utilities")
         REQUIRE(!setBasedEquality( V{3,2} , V{3,4} ));
     }
 
+    SECTION("Split String with string delimeter")
+    {
+        using S = std::string;
+        using V = std::vector< S >;
+        REQUIRE( rosalind::io::split( "AACCCA#-#GTTTGA" , "#-#") ==
+                 V({"AACCCA","GTTTGA"}) );
+
+        REQUIRE( rosalind::io::split( "AACCCA -> GTTTGA" , " -> ") ==
+                 V({"AACCCA","GTTTGA"}) );
+    }
+
     SECTION("Find with mismatches")
     {
         //TODO
     }
 }
+
 
 TEST_CASE("Finding Hidden Messages Algorithms","[BA1]")
 {
@@ -343,9 +355,7 @@ TEST_CASE("Graph Algorithms","[BA3]")
                         std::inserter( _actual , _actual.end()) ,
                         []( const std::pair< std::string , std::vector< std::string >> &p )
         {
-            auto targets = p.second;
-            if( targets.size() > 1 )
-                std::sort( targets.begin() , targets.end());
+            auto &targets = p.second;
             return p.first + " -> " + rosalind::io::join( targets , ",");
         });
 
@@ -358,25 +368,46 @@ TEST_CASE("Graph Algorithms","[BA3]")
 
     SECTION("BA3e: De Bruijn Overlap Strings Graph")
     {
-        using P = std::pair< std::string , std::vector< std::string >>;
+        using S = std::string;
+        using V = std::vector< S >;
+        using P = std::pair< const S , std::vector< S >>;
+        using M = std::map< const S , std::vector< S >>;
+
         auto input = getFileLines( dataFilePath("ba3e"));
         auto actual = rosalind::ba3::constructDeBruijnGraph( input.cbegin() , input.cend());
-
-        auto expected = getFileLines( outputFilePath("ba3e"));
-        decltype( expected ) _actual;
+        V _actual;
         std::transform( std::begin( actual ) , std::end( actual ) ,
-                        std::inserter( _actual , _actual.end()) ,
-                        []( const std::pair< std::string , std::vector< std::string >> &p )
+                        std::inserter( _actual , std::end( _actual )) ,
+                        []( const P &p )
         {
-            std::vector< std::string > targets = p.second;
-            return p.first + " -> " + rosalind::io::join( targets , ",");
+            auto _p = p;
+            std::sort( _p.second.begin() , _p.second.end());
+            return _p.first + " -> " + rosalind::io::join( _p.second , ",");
         });
 
+        auto expected = getFileLines( outputFilePath("ba3e"));
+        decltype( expected ) _expected;
+        std::transform( std::begin( expected ) , std::end( expected ) ,
+                        std::inserter( _expected , _expected.end()) ,
+                        []( const S &s )
+        {
+            auto l = rosalind::io::split( s , " -> ");
+            auto k = l[0];
+            auto v = rosalind::io::split(l[1] , ',');
+            std::sort( v.begin() , v.end());
+            return k + " -> " + rosalind::io::join( v , ",");
+        });
 
-        CAPTURE( expected.size());
+        CAPTURE( _expected.size());
         CAPTURE( _actual.size());
-        CAPTURE( expected[0]);
-        CAPTURE( _actual [0]);
-        REQUIRE(  setBasedEquality( expected , _actual ));
+        REQUIRE( setBasedEquality( _expected , _actual )) ;
+    }
+
+    SECTION("BA3f: Find Eulerian Cycle")
+    {
+        /**
+          * @todo correctness check method.
+          **/
+
     }
 }
