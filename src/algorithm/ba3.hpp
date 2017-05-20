@@ -20,6 +20,12 @@ public:
         Vertex( V data ) : _data( data ){}
         Vertex ( const Vertex & ) = default;
         Vertex() = default;
+
+        operator V() const
+        {
+            return _data;
+        }
+
         const V &data() const
         {
             return _data;
@@ -38,6 +44,9 @@ public:
     public:
         Edge( const Vertex &src , const Vertex &target )
             : _src( src ), _trgt( target ){}
+        Edge( const V &srcData , const V &trgtData )
+            : _src( srcData ) , _trgt( trgtData ) {}
+
         Edge ( const Edge & ) = default;
         Edge() = default ;
 
@@ -89,6 +98,13 @@ public:
     using Connections = std::pair< Edges , Edges >;
     using TraversableOnceGraph = std::map< const Vertex , std::list< Edge > , Graph< V >::GraphComparators>;
     using Path = std::list< Vertex >;
+
+    Graph() = default;
+
+    Graph( const Edges &edges )
+    {
+        addEdges( edges );
+    }
 
     void addEdges( const Edges &edges )
     {
@@ -252,9 +268,9 @@ reconstructStringFromKmers( SeqIt firstIt , SeqIt lastIt )
 {
     assert( std::distance( firstIt , lastIt ) > 1 );
     std::string str;
-    str.reserve( firstIt->length() + std::distance( firstIt + 1 , lastIt ));
+    str.reserve( firstIt->length() + std::distance( std::next( firstIt , 1 ) , lastIt ));
     str.insert( str.begin() , firstIt->begin() , firstIt->end());
-    std::transform( firstIt + 1 , lastIt ,
+    std::transform( std::next( firstIt , 1 ) , lastIt ,
                     std::inserter( str , std::end( str )) ,
                     []( const std::string &s ){ return s.back();});
     return str;
@@ -422,7 +438,51 @@ findEulerianPath( SeqIt first , SeqIt last )
     return graph.extractEulerianPath();
 }
 
+/**
+ * ba3h
+ * @brief reconstructStringFromSparseKmers
+ * @param first
+ * @param last
+ * @return
+ */
+template< typename SeqIt >
+std::string
+reconstructStringFromSparseKmers( SeqIt first , SeqIt last )
+{
+    using G = Graph< std::string >;
+    using E = G::Edge;
+    using V = G::Vertex ;
 
+    auto deBruijnGraph = constructDeBruijnGraph( first , last );
+    G::Edges edges;
+    std::for_each( deBruijnGraph.begin() , deBruijnGraph.end() ,
+                   [&edges]( const std::pair< std::string , std::vector< std::string >> &p )
+    {
+        V src( p.first );
+        for( const auto &target : p.second )
+        {
+            E e( src , V( target ));
+            edges.push_back( e );
+        }
+    });
+    deBruijnGraph.clear();
+
+    auto graph = G( edges );
+    edges.clear();
+
+    auto eulerianPath = graph.extractEulerianPath();
+    std::vector< std::string > kmers;
+    std::transform( eulerianPath.begin() , eulerianPath.end() ,
+                    std::inserter( kmers , kmers.end()) ,
+                    []( const V &v )
+    {
+        return v.data();
+    });
+    eulerianPath.clear();
+
+    return reconstructStringFromKmers( kmers.begin() , kmers.end());
+
+}
 }
 }
 #endif // BA2_HPP
