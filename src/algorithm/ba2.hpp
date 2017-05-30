@@ -466,7 +466,8 @@ randomizedMotifSearch( SeqIt firstIt , SeqIt lastIt ,
         std::transform( std::begin( kmers ) , std::end( kmers ) ,
                         std::inserter( oldMotifs , oldMotifs.end()) ,
                         []( const MotifsType &line ){
-            return *randomElement( line.begin() , line.end());
+            return *randomElementSampler(
+                        line.begin() , line.end())();
         });
 
         bool converging = true;
@@ -537,15 +538,16 @@ gibbsSampler( SeqIt firstIt , SeqIt lastIt , unsigned int k ,
         std::transform( std::begin( kmers ) , std::end( kmers ) ,
                         std::inserter( motifs , motifs.end()) ,
                         []( const MotifsType &line ){
-            return *randomElement( line.begin() , line.end());
+            return *randomElementSampler(
+                        line.begin() , line.end())();
         });
-
+        auto randomMotifSampler = randomElementSampler( motifs.begin() , motifs.end());
         auto currentBestScore = hammingDistanceScore( motifs );
         MotifsType currentBestMotifs = motifs;
         auto _runs = runs;
         while( _runs-- > 0 )
         {
-            auto motifIt = randomElement( motifs.begin() , motifs.end());
+            auto motifIt = randomMotifSampler();
             auto idx = std::distance( motifs.begin() , motifIt );
             auto profile = makeProfileWithException( motifs.cbegin() ,
                                                      motifs.cend() , motifIt , 1.f );

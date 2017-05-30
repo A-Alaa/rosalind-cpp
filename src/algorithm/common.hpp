@@ -27,22 +27,6 @@
 #include <cassert>
 #include <random>
 
-// Qt
-//#include <QString>
-//#include <QStringRef>
-
-//#ifdef _WIN32
-//#    ifdef LIBRARY_EXPORTS
-//#        define LIBRARY_API __declspec(dllexport)
-//#    else
-//#        define LIBRARY_API __declspec(dllimport)
-//#    endif
-//#elif
-//#    define LIBRARY_API
-//#endif
-
-//#define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
-
 namespace rosalind
 {
 
@@ -82,7 +66,7 @@ auto powi( uint16_t exponent )
  * @return
  */
 template <typename I>
-I randomElement(I begin, I end)
+I randomElement( I begin, I end )
 {
     using UIntType = unsigned long;
     const UIntType n = std::distance(begin, end);
@@ -96,14 +80,13 @@ I randomElement(I begin, I end)
 }
 
 template <typename I>
-I randomElementGenerator( I begin, I end )
+auto randomElementSampler( I begin, I end )
 {
-    using UIntType = unsigned long;
-    const UIntType n = std::distance(begin, end);
     static std::mt19937 rng( std::random_device{}());
+    const auto n = std::distance( begin , end );
     return [n,begin]() -> I
     {
-        std::uniform_int_distribution< unsigned int > dist{ 0 , n };
+        std::uniform_int_distribution< decltype(n) > dist{ 0 , n - 1 };
         return std::next( begin , dist( rng ));
     };
 }
