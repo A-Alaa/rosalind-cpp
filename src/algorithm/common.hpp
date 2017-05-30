@@ -25,6 +25,7 @@
 #include <typeinfo>
 #include <functional>
 #include <cassert>
+#include <random>
 
 // Qt
 //#include <QString>
@@ -65,14 +66,13 @@ using CodeType = std::size_t;
 using CountType = std::size_t;
 using RosalindIOType = std::vector< std::string >;
 
-template< typename T >
-auto powi( T base , uint16_t exponent )
+template< size_t Base  >
+auto powi( uint16_t exponent )
 {
-    static_assert( std::numeric_limits< T >::is_integer ,
-                   "exponent must be of integer type.");
-    if( exponent == 0 ) return T( 1 );
-    return T( base ) * powi( base , exponent - 1 );
+    if( exponent == 0 ) return size_t{1} ;
+    return  Base * powi< Base >( exponent - 1 );
 }
+
 
 /**
  * @brief random_element
@@ -95,6 +95,18 @@ I randomElement(I begin, I end)
     return begin;
 }
 
+template <typename I>
+I randomElementGenerator( I begin, I end )
+{
+    using UIntType = unsigned long;
+    const UIntType n = std::distance(begin, end);
+    static std::mt19937 rng( std::random_device{}());
+    return [n,begin]() -> I
+    {
+        std::uniform_int_distribution< unsigned int > dist{ 0 , n };
+        return std::next( begin , dist( rng ));
+    };
+}
 
 namespace io
 {
