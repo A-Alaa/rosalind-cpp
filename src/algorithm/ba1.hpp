@@ -130,7 +130,6 @@ frequentWordsBruteForce( const std::string &sequence , int k )
     const auto kmers = extractKmers( sequence , k );
     for( auto &kmer : kmers )
         frequency[ kmer ]++;
-
     std::list< std::string > mostFrequentKmers;
     int maxFrequency = 0;
     for( auto &kmer : frequency )

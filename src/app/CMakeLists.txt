@@ -36,7 +36,7 @@ add_executable( ba3f_FindEulerianCycle                  ba3f_FindEulerianCycle.c
 add_executable( ba3g_FindEulerianPath                   ba3g_FindEulerianPath.cpp                   )
 add_executable( ba3h_StringReconstructionFromKmers      ba3h_StringReconstructionFromKmers.cpp      )
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
-
+add_executable( ba3j_StringReconstructionFromPairedKmers ba3j_StringReconstructionFromPairedKmers.cpp)
 
 
 

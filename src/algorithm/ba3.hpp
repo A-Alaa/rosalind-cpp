@@ -247,6 +247,26 @@ public:
         return rosalind::io::join( out , "->");
     }
 
+    std::string toString() const
+    {
+        std::string str;
+        for( const auto &p : _graph )
+        {
+            str += p.first;
+            str += "->";
+            std::vector< std::string > targets;
+            std::transform( p.second.second.begin() ,
+                            p.second.second.end() ,
+                            std::inserter( targets , targets.end()) ,
+                            []( const Edge &e ){
+                return  e.target().data();
+            });
+            str += io::join( targets , "," );
+            str += '\n';
+        }
+        return str;
+    }
+
 
 private:
     std::map< Vertex , Connections , GraphComparators > _graph;
@@ -479,6 +499,115 @@ reconstructStringFromSparseKmers( SeqIt first , SeqIt last )
         return v.data();
     });
     eulerianPath.clear();
+
+    return reconstructStringFromKmers( kmers.begin() , kmers.end());
+
+}
+
+template< typename SeqIt >
+auto
+constructPairedStringsOverlapMap( SeqIt firstIt , SeqIt lastIt )
+{
+    using S = std::string;
+    using V = std::vector< std::array< char , 2 >>;
+    std::unordered_map< S , std::pair< V , V >> prefixSuffixMap;
+    const unsigned int k = firstIt->size() / 2;
+    // Populate suffixes, O(n).
+    for( auto it = firstIt ; it != lastIt ; ++it )
+    {
+        // Remove chars at x in string: xCCC|xCCC
+        S suffix = S( it->begin() + 1 , it->begin() + k + 1 ) +
+                S( it->begin() + k + 2 , it->end());
+        assert( suffix.size() == 2 * k - 1 );
+        prefixSuffixMap[ suffix ].first.push_back(
+        {it->front(), it->at( k + 1 )});
+    }
+
+    // Populate prefixes, O(n).
+    for( auto it = firstIt ; it != lastIt ; ++it )
+    {
+        // Remove chars at x in string: CCCx|CCCx
+        S prefix = S( it->begin() , it->begin() + k - 1 ) +
+                S( it->begin() + k , it->end() - 1 );
+        assert( prefix.size() == 2 * k - 1 );
+        prefixSuffixMap[ prefix ].second.push_back(
+        { it->at( k - 1 ) , it->back() });
+    }
+
+    return prefixSuffixMap;
+}
+
+template< typename SeqIt >
+std::map< const std::string , std::vector< std::string >>
+constructPairedDeBruijnGraph( SeqIt firstIt , SeqIt lastIt , char sep = '|' )
+{
+    auto checkInput = [firstIt,lastIt,sep](){
+        unsigned int k = firstIt->size() / 2;
+        return std::all_of( firstIt , lastIt ,
+                            [k,sep]( const std::string &p ){
+            return p.size() == 2 * k + 1 &&
+                    p[k] == sep;
+        });
+    };
+    assert( checkInput());
+    const unsigned int k = firstIt->size() / 2;
+
+    // Construct the overlap map, O(n).
+    auto prefixSuffixMap = constructPairedStringsOverlapMap( firstIt , lastIt );
+
+    // Construct the graph, O(n).
+    std::map< const std::string , std::vector< std::string >> deBruijnGraph;
+    for( const auto &prefixSuffix : prefixSuffixMap )
+        for( const std::array< char , 2 > &prefix : prefixSuffix.second.first )
+        {
+            // prefixStr = CCx|CCx
+            auto prefixStr = prefixSuffix.first;
+            // add prefixes so prefixStr = pCCx|pCCx
+            prefixStr.insert( 0     , 1 , prefix[0] );
+            prefixStr.insert( k + 1 , 1 , prefix[1] );
+            // now remove x's
+            prefixStr.pop_back();
+            prefixStr.erase( k - 1 , 1 );
+            deBruijnGraph[ prefixStr ].emplace_back( prefixSuffix.first );
+        }
+    return deBruijnGraph;
+}
+
+
+template< typename SeqIt >
+std::string
+reconstructStringFromSparsePairedKmers( SeqIt first , SeqIt last ,
+                                        unsigned int spaced )
+{
+    using G = Graph< std::string >;
+    using E = G::Edge;
+    using V = G::Vertex ;
+
+    auto deBruijnGraph = constructPairedDeBruijnGraph( first , last );
+    G::Edges edges;
+    std::for_each( deBruijnGraph.begin() , deBruijnGraph.end() ,
+                   [&edges]( const std::pair< std::string , std::vector< std::string >> &p )
+    {
+        V src( p.first );
+        for( const auto &target : p.second )
+        {
+            E e( src , V( target ));
+            edges.push_back( e );
+        }
+    });
+    deBruijnGraph.clear();
+
+    auto graph = G( edges );
+    edges.clear();
+
+    auto eulerianPath = graph.extractEulerianPath();
+    std::vector< std::string > kmers;
+    std::transform( eulerianPath.begin() , eulerianPath.end() ,
+                    std::inserter( kmers , kmers.end()) ,
+                    []( const V &v )
+    {
+        return io::split( v.data() , "|" )[0];
+    });
 
     return reconstructStringFromKmers( kmers.begin() , kmers.end());
 

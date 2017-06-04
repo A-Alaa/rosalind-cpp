@@ -410,4 +410,20 @@ TEST_CASE("Graph Algorithms","[BA3]")
           **/
 
     }
+
+    SECTION("BA3g: Find Eulerian Path")
+    {
+        /**
+          * @todo correctness check method.
+          **/
+
+    }
+
+    SECTION("BA3h: String Reconstruction From Kmers")
+    {
+        /**
+          * @todo correctness check method.
+          **/
+
+    }
 }
