@@ -130,7 +130,6 @@ frequentWordsBruteForce( const std::string &sequence , int k )
     const auto kmers = extractKmers( sequence , k );
     for( auto &kmer : kmers )
         frequency[ kmer ]++;
-
     std::list< std::string > mostFrequentKmers;
     int maxFrequency = 0;
     for( auto &kmer : frequency )
@@ -278,7 +277,7 @@ findClumps( const std::string &input ,
     std::unordered_set< IndexType > occurance;
     std::vector< CountType > occuranceSpace;
     try{
-        occuranceSpace = std::vector< CountType >( powi( 4 , k ) , 0 );
+        occuranceSpace = std::vector< CountType >( powi< 4 >( k ) , 0 );
     } catch( const std::bad_alloc &e )
     {
         std::cout << e.what();
@@ -286,7 +285,7 @@ findClumps( const std::string &input ,
     }
 
     CodeType sequenceCode = 0;
-    const CodeType mask = powi( 4 , k-1 );
+    const CodeType mask = powi< 4 >( k-1 );
     auto wholeSequence = input.c_str();
 
     for( IndexType i = 0; i < k - 1 ; i++ )
@@ -532,7 +531,7 @@ frequentWordsWithMismatchesAndReverseComplement(
 {
     auto cSequence = sequence.c_str();
     std::pair< std::list< std::string > , int > mostFrequentKmers;
-    const CodeType kmerSpace = powi( 4 , k );
+    const CodeType kmerSpace = powi< 4 >( k );
     for( IndexType i = 0 ; i < kmerSpace ; i++ )
     {
         int occurance = 0;
@@ -585,7 +584,7 @@ frequentWordsWithMismatchesAndReverseComplement( const RosalindIOType &inputStri
 std::vector< CountType >
 stringFrequencyArray( const std::string & sequence , unsigned int k )
 {
-    auto kmerSpace = powi( 4 , k );
+    auto kmerSpace = powi< 4 >( k );
     std::vector< CountType > frequencyArray( kmerSpace , 0 );
     for( const auto &kmer : extractKmers( sequence , k ))
         frequencyArray[ encode( kmer )]++;

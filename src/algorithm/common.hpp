@@ -25,22 +25,7 @@
 #include <typeinfo>
 #include <functional>
 #include <cassert>
-
-// Qt
-//#include <QString>
-//#include <QStringRef>
-
-//#ifdef _WIN32
-//#    ifdef LIBRARY_EXPORTS
-//#        define LIBRARY_API __declspec(dllexport)
-//#    else
-//#        define LIBRARY_API __declspec(dllimport)
-//#    endif
-//#elif
-//#    define LIBRARY_API
-//#endif
-
-//#define EXTERN_DLL_EXPORT extern "C" __declspec(dllexport)
+#include <random>
 
 namespace rosalind
 {
@@ -65,14 +50,13 @@ using CodeType = std::size_t;
 using CountType = std::size_t;
 using RosalindIOType = std::vector< std::string >;
 
-template< typename T >
-auto powi( T base , uint16_t exponent )
+template< size_t Base  >
+auto powi( uint16_t exponent )
 {
-    static_assert( std::numeric_limits< T >::is_integer ,
-                   "exponent must be of integer type.");
-    if( exponent == 0 ) return T( 1 );
-    return T( base ) * powi( base , exponent - 1 );
+    if( exponent == 0 ) return size_t{1} ;
+    return  Base * powi< Base >( exponent - 1 );
 }
+
 
 /**
  * @brief random_element
@@ -82,7 +66,7 @@ auto powi( T base , uint16_t exponent )
  * @return
  */
 template <typename I>
-I randomElement(I begin, I end)
+I randomElement( I begin, I end )
 {
     using UIntType = unsigned long;
     const UIntType n = std::distance(begin, end);
@@ -95,6 +79,17 @@ I randomElement(I begin, I end)
     return begin;
 }
 
+template <typename I>
+auto randomElementSampler( I begin, I end )
+{
+    static std::mt19937 rng( std::random_device{}());
+    const auto n = std::distance( begin , end );
+    return [n,begin]() -> I
+    {
+        std::uniform_int_distribution< decltype(n) > dist{ 0 , n - 1 };
+        return std::next( begin , dist( rng ));
+    };
+}
 
 namespace io
 {
@@ -135,17 +130,25 @@ auto split( const std::string &s , std::string delim  )
     return tokens;
 }
 
-template< typename Container = std::vector< std::string >>
-std::string join( const Container &container ,
-                  const std::string &sep )
+template< typename SeqIt >
+std::string join( SeqIt first , SeqIt last , const std::string &sep )
 {
     auto binaryJoinString = [sep]( const std::string &a , const std::string &b ) -> std::string
     {
         return  a + ((a.length() > 0) ? sep : "") +  b ;
     };
-    return std::accumulate( container.begin() , container.end() ,
+    return std::accumulate( first , last ,
                             std::string() , binaryJoinString  );
 }
+
+template< typename Container = std::vector< std::string >>
+std::string join( const Container &container ,
+                  const std::string &sep )
+{
+    return join( container.cbegin() , container.cend() , sep );
+}
+
+
 
 auto
 findWithMismatches( const std::string &str ,
