@@ -82,13 +82,13 @@ public:
 
     struct GraphComparators
     {
-        constexpr bool operator()(const Edge &lhs, const Edge &rhs) const
+        bool operator()(const Edge &lhs, const Edge &rhs) const
         {
             return lhs._src._data + lhs._trgt._data <
                     rhs._src._data + rhs._trgt._data;
         }
 
-        constexpr bool operator()(const Vertex &lhs, const Vertex &rhs) const
+        bool operator()(const Vertex &lhs, const Vertex &rhs) const
         {
             return lhs._data < rhs._data;
         }
@@ -96,7 +96,7 @@ public:
 
     using Edges = std::vector< Edge >;
     using Connections = std::pair< Edges , Edges >;
-    using TraversableOnceGraph = std::map< const Vertex , std::list< Edge > , Graph< V >::GraphComparators>;
+    using TraversableOnceGraph = std::map< const Vertex , std::list< Edge > , GraphComparators>;
     using Path = std::list< Vertex >;
 
     Graph() = default;
