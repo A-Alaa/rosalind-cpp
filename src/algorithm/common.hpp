@@ -83,7 +83,7 @@ template <typename I>
 auto randomElementSampler( I begin, I end )
 {
     static std::mt19937 rng( std::random_device{}());
-    const auto n = std::distance( begin , end );
+    auto n = std::distance( begin , end );
     return [n,begin]() -> I
     {
         std::uniform_int_distribution< decltype(n) > dist{ 0 , n - 1 };
@@ -133,9 +133,9 @@ auto split( const std::string &s , std::string delim  )
 template< typename SeqIt >
 std::string join( SeqIt first , SeqIt last , const std::string &sep )
 {
-    auto binaryJoinString = [sep]( const std::string &a , const std::string &b ) -> std::string
+    auto binaryJoinString = [sep]( std::string &a , const std::string &b ) -> std::string&
     {
-        return  a + ((a.length() > 0) ? sep : "") +  b ;
+        return  a += ( ((a.length() > 0) ? sep : "") +  b );
     };
     return std::accumulate( first , last ,
                             std::string() , binaryJoinString  );

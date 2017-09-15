@@ -582,7 +582,7 @@ reconstructStringFromSparsePairedKmers( SeqIt first , SeqIt last ,
     using G = Graph< std::string >;
     using E = G::Edge;
     using V = G::Vertex ;
-
+    const int k = io::split( *first , '|').front().size();
     auto deBruijnGraph = constructPairedDeBruijnGraph( first , last );
     G::Edges edges;
     std::for_each( deBruijnGraph.begin() , deBruijnGraph.end() ,
@@ -602,14 +602,22 @@ reconstructStringFromSparsePairedKmers( SeqIt first , SeqIt last ,
 
     auto eulerianPath = graph.extractEulerianPath();
     std::vector< std::string > kmers;
-    std::transform( eulerianPath.begin() , eulerianPath.end() ,
+    std::transform( eulerianPath.cbegin() ,
+                    eulerianPath.cend() ,
                     std::inserter( kmers , kmers.end()) ,
                     []( const V &v )
     {
-        return io::split( v.data() , "|" )[0];
+        return io::split( v.data() , "|" ).front();
     });
-
-    return reconstructStringFromKmers( kmers.begin() , kmers.end());
+    // Append the residual part.
+    std::transform( std::prev( eulerianPath.cend() , spaced + k ) ,
+                    eulerianPath.cend() ,
+                    std::inserter( kmers , kmers.end()) ,
+                    []( const V &v )
+    {
+        return io::split( v.data() , "|" ).at( 1 );
+    });
+    return reconstructStringFromKmers( kmers.cbegin() , kmers.cend());
 
 }
 }

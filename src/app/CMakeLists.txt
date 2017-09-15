@@ -1,6 +1,6 @@
 ## Dependencies
 #include( Qt )
-include_directories( ../common )
+include_directories( ../algorithm )
 
 ### Generate the executable
 add_executable( ba1a_PatternCount                       ba1a_PatternCount.cpp                       )

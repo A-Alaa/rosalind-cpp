@@ -1,8 +1,9 @@
-CMAKE_MINIMUM_REQUIRED( VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9)
 
-### c++11 standards
-set( CMAKE_CXX_STANDARD 14 )
-
+### c++14 standards
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 if(WIN32)

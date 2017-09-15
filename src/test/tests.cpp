@@ -426,4 +426,11 @@ TEST_CASE("Graph Algorithms","[BA3]")
           **/
 
     }
+    SECTION("BA3i: ")
+    {
+        /**
+          * @todo correctness check method.
+          **/
+
+    }
 }
