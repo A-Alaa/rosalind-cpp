@@ -2,6 +2,7 @@
 #define BA3_HPP
 
 #include "ba2.hpp"
+#include <bitset>
 
 namespace rosalind
 {
@@ -21,7 +22,7 @@ public:
         Vertex ( const Vertex & ) = default;
         Vertex() = default;
 
-        operator V() const
+        operator const V&() const
         {
             return _data;
         }
@@ -32,7 +33,7 @@ public:
         }
         bool operator ==( const Vertex &other ) const
         {
-            _data == other._data;
+            return _data == other._data;
         }
     };
 
@@ -98,6 +99,7 @@ public:
     using Connections = std::pair< Edges , Edges >;
     using TraversableOnceGraph = std::map< const Vertex , std::list< Edge > , GraphComparators>;
     using Path = std::list< Vertex >;
+    using GraphContainer = std::map< Vertex , Connections , GraphComparators >;
 
     Graph() = default;
 
@@ -158,6 +160,7 @@ public:
                                                   p.second.second.end());
         return graph;
     }
+
     const auto &data() const
     {
         return _graph;
@@ -197,15 +200,6 @@ public:
             });
         }
         return eCycle;
-    }
-
-    static bool emptyGraph( const TraversableOnceGraph &graph )
-    {
-        return std::all_of( graph.begin() , graph.end() ,
-                            []( const std::pair< Vertex , Edges > &p )
-        {
-            return p.second.empty();
-        });
     }
 
     static typename TraversableOnceGraph::iterator getVertexWithUnexpandedEdge( const TraversableOnceGraph &graph )
@@ -267,6 +261,72 @@ public:
         return str;
     }
 
+    std::vector< Edges >
+    extractContigs() const
+    {
+        using EdgesReference = std::reference_wrapper< const Edges >;
+        using MutableEdges = std::pair< Edges , int const >;
+        using SemiMutableConnections = std::pair< EdgesReference , MutableEdges >;
+        using SemiMutableGraph = std::map< Vertex , SemiMutableConnections , GraphComparators >;
+        SemiMutableGraph unvisitedEdges;
+        for( auto it = _graph.cbegin() ; it != _graph.cend() ; it++ )
+            unvisitedEdges.try_emplace(
+                        it->first ,std::make_pair( std::cref( it->second.first ) ,
+                                                   std::make_pair( it->second.second ,
+                                                                   it->second.second.size())));
+
+        auto getSeed = [&unvisitedEdges]()
+        {
+            for( SemiMutableGraph::iterator it = unvisitedEdges.begin() ;
+                 it != unvisitedEdges.end() ; it++ )
+            {
+                int unvisitedOutEdgesCount = it->second.second.first.size();
+                int outEdgesCount = it->second.second.second;
+                int inEdgesCount = it->second.first.get().size();
+                if( !( outEdgesCount == 1 && inEdgesCount == 1 ) &&
+                        unvisitedOutEdgesCount > 0 )
+                    return it;
+            }
+            return unvisitedEdges.end();
+        };
+
+        auto isInternal = []( SemiMutableGraph::iterator it )
+        {
+            size_t outEdgesCount = it->second.second.second;
+            size_t inEdgesCount = it->second.first.get().size();
+            return outEdgesCount == 1 && inEdgesCount == 1;
+        };
+
+        auto popForwardEdge = [&unvisitedEdges]( SemiMutableGraph::iterator it )
+        {
+            MutableEdges &mEdges = it->second.second;
+            Edges &edges = mEdges.first;
+            auto forwardEdge = edges.back();
+            edges.pop_back();
+            return forwardEdge;
+        };
+
+
+        auto developContig = [&]( SemiMutableGraph::iterator seed )->Edges
+        {
+            Edges contig;
+            SemiMutableGraph::iterator it = seed;
+            do
+            {
+                contig.push_back( popForwardEdge( it ));
+                it = unvisitedEdges.find( contig.back().target());
+            }while( it != unvisitedEdges.end() && isInternal( it ));
+            return std::move( contig );
+        };
+
+        std::vector< Edges > contigs;
+        for( SemiMutableGraph::iterator seed = getSeed() ;
+             seed != unvisitedEdges.end() ;
+             seed = getSeed())
+            contigs.push_back( developContig( seed ));
+
+        return contigs;
+    }
 
 private:
     std::map< Vertex , Connections , GraphComparators > _graph;
@@ -323,7 +383,7 @@ constructOverlapMap( SeqIt firstIt , SeqIt lastIt )
 
 /**
  * ba3c
- * @brief overlapStringsGraph
+ * @brief overlapS3tringsGraph
  * Given an arbitrary collection of k-mers Patterns,
  * we form a graph having a node for each k-mer in Patterns
  * and connect k-mers Pattern and Pattern' by a directed edge
@@ -574,6 +634,33 @@ constructPairedDeBruijnGraph( SeqIt firstIt , SeqIt lastIt , char sep = '|' )
 }
 
 
+/**
+ * @brief reconstructStringFromSparsePairedKmers
+ * Since increasing read length presents a difficult experimental problem,
+ * biologists have suggested an indirect way of increasing read length by
+ *  generating read-pairs, which are pairs of reads separated by a fixed
+ * distance d in the genome. You can think about a read-pair as a
+ * long "gapped" read of length k + d + k whose first and last k-mers
+ *  are known but whose middle segment of length d is unknown. Nevertheless,
+ * read-pairs contain more information than k-mers alone, and so we should be
+ * able to use them to improve our assemblies. If only you could infer the nucleotides
+ *  in the middle segment of a read-pair, you would immediately increase
+ * the read length from k to 2 · k + d.
+ * Given a string Text, a (k,d)-mer is a pair of k-mers in
+ * Text separated by distance d. We use the notation (Pattern1|Pattern2)
+ *  to refer to a a (k,d)-mer whose k-mers are Pattern1 and Pattern2.
+ * The (k,d)-mer composition of Text, denoted PairedCompositionk,d(Text),
+ * is the collection of all (k,d)- mers in Text (including repeated (k,d)-mers).
+
+ * @param first
+ * An iterator pointing to begining of paired reads sequence.
+ * @param last
+ * An iterator pointing to end of paired reads sequence.
+ * @param spaced
+ * The d parameter.
+ * @return
+ *  A string Text with (k, d)-mer composition equal to PairedReads.
+ */
 template< typename SeqIt >
 std::string
 reconstructStringFromSparsePairedKmers( SeqIt first , SeqIt last ,
@@ -618,6 +705,87 @@ reconstructStringFromSparsePairedKmers( SeqIt first , SeqIt last ,
         return io::split( v.data() , "|" ).at( 1 );
     });
     return reconstructStringFromKmers( kmers.cbegin() , kmers.cend());
+}
+
+std::string kUniversalCircularString( unsigned int k )
+{
+    std::vector< std::string > elements;
+    auto count = powi< 2 >(k);
+    elements.reserve( count );
+    std::string templateString;
+
+    if( k < 64 )
+    {
+        templateString.reserve( 64 );
+        for( decltype(count) i = 0 ; i < count ; i++ )
+        {
+            templateString = std::bitset< 64 >( i ).to_string();
+            elements.emplace_back( std::prev( templateString.cend() , k ) , templateString.cend());
+        }
+    }
+    else if( k < 128 )
+    {
+        templateString.reserve( 128 );
+        for( decltype(count) i = 0 ; i < count ; i++ )
+        {
+            templateString = std::bitset< 64 >( i ).to_string();
+            elements.emplace_back( std::prev( templateString.cend() , k ) , templateString.cend());
+        }
+    }
+    else
+    {
+        std::cout << "Large number!";
+    }
+
+    std::string kUniversalString = reconstructStringFromSparseKmers( elements.cbegin(), elements.cend());
+    int truncation = 0;
+    while( *std::next(kUniversalString.cbegin(),truncation) ==
+           *std::prev(kUniversalString.cend(), truncation + 1))
+        truncation++;
+    while( truncation-- > 0 )
+        kUniversalString.pop_back();
+    return kUniversalString;
+}
+
+template< typename SeqIt >
+std::vector< std::string >
+generateContigs( SeqIt first , SeqIt last )
+{
+    using G = Graph< std::string >;
+    using E = G::Edge;
+    using V = G::Vertex ;
+    auto deBruijnGraph = constructDeBruijnGraph( first , last );
+    G::Edges edges;
+    std::for_each( deBruijnGraph.cbegin() , deBruijnGraph.cend() ,
+                   [&edges]( const std::pair< std::string , std::vector< std::string >> &p )
+    {
+        V src( p.first );
+        for( const auto &target : p.second )
+        {
+            E e( src , V( target ));
+            edges.push_back( e );
+        }
+    });
+    deBruijnGraph.clear();
+    G graph = G( edges );
+    edges.clear();
+
+    std::vector< std::string > contigs;
+    std::vector< G::Edges > rawContigs = graph.extractContigs();
+    std::transform( rawContigs.cbegin() , rawContigs.cend() ,
+                    std::inserter( contigs , std::end( contigs )) ,
+                    []( const G::Edges &contig )->std::string{
+        std::vector< std::string > contigList;
+        std::transform( contig.cbegin() , contig.cend() ,
+                        std::inserter( contigList , std::end( contigList )) ,
+                        [](  const E &e )->std::string{
+            return e.source().data();
+        });
+        contigList.push_back( contig.back().target());
+        return reconstructStringFromKmers( contigList.cbegin() , contigList.cend());
+    });
+
+    return contigs;
 
 }
 }

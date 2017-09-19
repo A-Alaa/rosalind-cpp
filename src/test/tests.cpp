@@ -433,4 +433,21 @@ TEST_CASE("Graph Algorithms","[BA3]")
           **/
 
     }
+    SECTION("BA3j: ")
+    {
+        auto input = getFileLines( dataFilePath("ba3j"));
+        unsigned int d = atoi( rosalind::io::split( input.front() , " ")[1].c_str() );
+        auto actual = rosalind::ba3::reconstructStringFromSparsePairedKmers(
+                    input.cbegin() + 1 , input.cend(), d );
+        auto expected = getFileLines( outputFilePath("ba3j")).front();
+        REQUIRE( actual == expected );
+    }
+    SECTION("BA3jk: Contigs generation")
+    {
+        auto input = getFileLines( dataFilePath("ba3k"));
+        auto actual = rosalind::ba3::generateContigs( input.cbegin() , input.cend());
+        auto expected = rosalind::io::split(
+                    getFileLines( outputFilePath("ba3k")).front() , " ");
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
 }

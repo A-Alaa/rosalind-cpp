@@ -94,6 +94,19 @@ auto randomElementSampler( I begin, I end )
 namespace io
 {
 
+template< typename CharType = char >
+auto getFileLines( const std::string &filePath )
+{
+    std::basic_ifstream< CharType > f( filePath );
+    std::vector< std::basic_string< CharType > > lines;
+    std::basic_string< CharType > line;
+    if( f )
+        while( std::getline( f , line ))
+            lines.push_back( line );
+    else std::cout << "Failed to open file:" << filePath << std::endl;
+    return lines;
+}
+
 std::vector< std::string >
 readInputStream()
 {
@@ -105,7 +118,7 @@ readInputStream()
     return lines;
 }
 
-auto split( const std::string &s , char delim  )
+auto split( const std::string &s , char delim )
 {
     std::stringstream ss( s );
     std::vector< std::string > tokens;
@@ -115,7 +128,8 @@ auto split( const std::string &s , char delim  )
     return tokens;
 }
 
-auto split( const std::string &s , std::string delim  )
+auto split( const std::string &s ,
+            std::string delim )
 {
     std::vector< std::string > tokens;
     size_t last = 0; size_t next = 0;

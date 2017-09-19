@@ -35,9 +35,12 @@ add_executable( ba3e_DeBruijnGraph                      ba3e_DeBruijnGraph.cpp  
 add_executable( ba3f_FindEulerianCycle                  ba3f_FindEulerianCycle.cpp                  )
 add_executable( ba3g_FindEulerianPath                   ba3g_FindEulerianPath.cpp                   )
 add_executable( ba3h_StringReconstructionFromKmers      ba3h_StringReconstructionFromKmers.cpp      )
-add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
+add_executable( ba3i_kUniversalCircularStringProblem    ba3i_kUniversalCircularStringProblem.cpp    )
 add_executable( ba3j_StringReconstructionFromPairedKmers ba3j_StringReconstructionFromPairedKmers.cpp)
+add_executable( ba3k_contigGeneration                   ba3k_contigGeneration.cpp                   )
 
+
+add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 
 
 
