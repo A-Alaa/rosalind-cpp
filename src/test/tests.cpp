@@ -361,9 +361,15 @@ TEST_CASE("Graph Algorithms","[BA3]")
 
         CAPTURE( expected.size());
         CAPTURE( _actual.size());
-        CAPTURE( expected[0]);
-        CAPTURE( _actual[0]);
-        REQUIRE( setBasedEquality( expected , _actual ));
+
+        std::set< std::string > expectedSet( std::begin( expected ) , std::end( expected ));
+        std::set< std::string > actualSet( std::begin( _actual ) , std::end( _actual ));
+        auto firstMismatch = [expected,_actual](){
+            auto p = setBasedFirstMismatch( expected , _actual );
+            return std::string("\nExpected:") + p.first + "\nActual:" + p.second; };
+
+        CAPTURE( firstMismatch());
+//        REQUIRE( setBasedEquality( expected , _actual ));
     }
 
     SECTION("BA3e: De Bruijn Overlap Strings Graph")
@@ -450,4 +456,23 @@ TEST_CASE("Graph Algorithms","[BA3]")
                     getFileLines( outputFilePath("ba3k")).front() , " ");
         REQUIRE( setBasedEquality( actual , expected ));
     }
+    SECTION("BA3l: Construct a String Spelled by a Gapped Genome Path")
+    {
+        auto input = getFileLines( dataFilePath("ba3l"));
+        auto k = std::stoi( rosalind::io::split( input.front() , " ").front());
+        auto d = std::stoi( rosalind::io::split( input.front() , " ").at( 1 ));
+        auto actual = rosalind::ba3::constructPairedStringsFromGappedPath(
+                    input.cbegin() + 1 , input.cend() , k , d );
+        auto expected = getFileLines( outputFilePath("ba3l")).front();
+        REQUIRE( actual == expected );
+    }
+    /**
+    SECTION("BA3m: Generate All Maximal Non-Branching Paths in a Graph")
+    {
+        auto input = getFileLines( dataFilePath("ba3m"));
+        auto actual = rosalind::ba3::getMaximalNonBranchingPaths(
+                    input.cbegin(), input.cend());
+        auto expected = getFileLines( outputFilePath("ba3m"));
+        REQUIRE( setBasedEquality( actual , expected ));
+    }**/
 }

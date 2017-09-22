@@ -38,6 +38,8 @@ add_executable( ba3h_StringReconstructionFromKmers      ba3h_StringReconstructio
 add_executable( ba3i_kUniversalCircularStringProblem    ba3i_kUniversalCircularStringProblem.cpp    )
 add_executable( ba3j_StringReconstructionFromPairedKmers ba3j_StringReconstructionFromPairedKmers.cpp)
 add_executable( ba3k_contigGeneration                   ba3k_contigGeneration.cpp                   )
+add_executable( ba3l_ConstructStringSpelledByGappedGenome ba3l_ConstructStringSpelledByGappedGenome.cpp )
+add_executable( ba3m_MaximalNonBranchingPaths           ba3m_MaximalNonBranchingPaths.cpp )
 
 
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )

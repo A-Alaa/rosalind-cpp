@@ -43,16 +43,37 @@ namespace test_utils
 
     template< typename Container1 , typename Container2 ,
               typename Elem = typename Container1::value_type >
-    bool setBasedEquality( const Container1 &a , const Container2 &b ,
-                           bool checkSize = true )
+    bool
+    setBasedEquality( const Container1 &a , const Container2 &b ,
+                      bool checkSize = true )
     {
         if( checkSize && a.size() != b.size())
             return false;
 
         std::set< Elem > setA( std::begin( a ) , std::end( a ));
         std::set< Elem > setB( std::begin( b ) , std::end( b ));
+
         return setA == setB;
     }
+
+    template< typename Container1 , typename Container2 ,
+              typename Elem = typename Container1::value_type >
+    std::pair< Elem , Elem >
+    setBasedFirstMismatch( const Container1 &a , const Container2 &b )
+    {
+        std::set< Elem > setA( std::begin( a ) , std::end( a ));
+        std::set< Elem > setB( std::begin( b ) , std::end( b ));
+        auto mismatchItPair = std::mismatch( setA.cbegin() , setA.cend() ,
+                                       setB.cbegin());
+
+        if( mismatchItPair.first == setA.cend() ||
+                mismatchItPair.second == setB.cend())
+            return {};
+        else return std::make_pair( *mismatchItPair.first ,
+                                    *mismatchItPair.second );
+    }
+
+
 
 }
 #endif // TESTS_H

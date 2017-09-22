@@ -270,15 +270,16 @@ public:
         using SemiMutableGraph = std::map< Vertex , SemiMutableConnections , GraphComparators >;
         SemiMutableGraph unvisitedEdges;
         for( auto it = _graph.cbegin() ; it != _graph.cend() ; it++ )
-            unvisitedEdges.try_emplace(
+            unvisitedEdges.emplace(
                         it->first ,std::make_pair( std::cref( it->second.first ) ,
                                                    std::make_pair( it->second.second ,
                                                                    it->second.second.size())));
 
         auto getSeed = [&unvisitedEdges]()
         {
-            for( SemiMutableGraph::iterator it = unvisitedEdges.begin() ;
-                 it != unvisitedEdges.end() ; it++ )
+            static typename SemiMutableGraph::iterator it = unvisitedEdges.begin();
+            static typename SemiMutableGraph::iterator circularIt = unvisitedEdges.begin();
+            for( ; it != unvisitedEdges.end() ; it++ )
             {
                 int unvisitedOutEdgesCount = it->second.second.first.size();
                 int outEdgesCount = it->second.second.second;
@@ -287,40 +288,51 @@ public:
                         unvisitedOutEdgesCount > 0 )
                     return it;
             }
+            for( ; circularIt != unvisitedEdges.end() ; circularIt++ )
+            {
+                int unvisitedOutEdgesCount = circularIt->second.second.first.size();
+                if( unvisitedOutEdgesCount > 0 )
+                    return circularIt;
+            }
+            it = unvisitedEdges.begin();
+            circularIt = unvisitedEdges.begin();
             return unvisitedEdges.end();
         };
 
-        auto isInternal = []( SemiMutableGraph::iterator it )
+        auto isInternal = []( typename SemiMutableGraph::iterator it )
         {
             size_t outEdgesCount = it->second.second.second;
             size_t inEdgesCount = it->second.first.get().size();
             return outEdgesCount == 1 && inEdgesCount == 1;
         };
 
-        auto popForwardEdge = [&unvisitedEdges]( SemiMutableGraph::iterator it )
+        auto forwardEdges = []( typename SemiMutableGraph::iterator it )-> Edges&
         {
-            MutableEdges &mEdges = it->second.second;
-            Edges &edges = mEdges.first;
-            auto forwardEdge = edges.back();
-            edges.pop_back();
+            return it->second.second.first;
+        };
+
+        auto popForwardEdge = [forwardEdges]( typename SemiMutableGraph::iterator it )
+        {
+            auto forwardEdge = forwardEdges( it ).back();
+            forwardEdges( it ).pop_back();
             return forwardEdge;
         };
 
-
-        auto developContig = [&]( SemiMutableGraph::iterator seed )->Edges
+        auto developContig = [&]( typename SemiMutableGraph::iterator seed )->Edges
         {
             Edges contig;
-            SemiMutableGraph::iterator it = seed;
-            do
+            typename SemiMutableGraph::iterator it = seed;
+            while( it != unvisitedEdges.end() && !forwardEdges( it ).empty())
             {
                 contig.push_back( popForwardEdge( it ));
                 it = unvisitedEdges.find( contig.back().target());
-            }while( it != unvisitedEdges.end() && isInternal( it ));
+                if( !isInternal( it )) break;
+            }
             return std::move( contig );
         };
 
         std::vector< Edges > contigs;
-        for( SemiMutableGraph::iterator seed = getSeed() ;
+        for( typename SemiMutableGraph::iterator seed = getSeed() ;
              seed != unvisitedEdges.end() ;
              seed = getSeed())
             contigs.push_back( developContig( seed ));
@@ -788,6 +800,111 @@ generateContigs( SeqIt first , SeqIt last )
     return contigs;
 
 }
+
+template <typename SeqIt >
+std::string constructPairedStringsFromGappedPath( SeqIt first , SeqIt last  ,
+                                                  int k , int d )
+{
+    std::string text;
+    auto checkInput = [=](){
+        auto gappedIt = std::adjacent_find( first , last ,
+                                            []( const std::string &s1 , const std::string &s2 )
+        {
+            auto s1p = io::split( s1 , "|" );
+            auto s11 = s1p.front();
+            auto s12 = s1p.at( 1 );
+            auto s2p = io::split( s2 , "|" );
+            auto s21 = s2p.front();
+            auto s22 = s2p.at( 1 );
+            return !( std::equal( s11.cbegin() + 1 , s11.cend() ,
+                                  s21.cbegin()) &&
+                      std::equal( s12.cbegin() + 1 , s12.cend() ,
+                                  s22.cbegin()));
+
+        });
+        bool uniformGapped = std::equal( first + k + d , last ,
+                                         first , []( const std::string &a , const std::string &b )
+        {
+            return io::split( a , "|" ).front() ==
+                    io::split( b , "|" ).at( 1 );
+        });
+        return uniformGapped && gappedIt == last;
+    };
+    const auto readsCount = std::distance( first , last );
+    if( k + d < readsCount )
+    {
+        assert( checkInput());
+        const size_t textLength =  k + k + d + readsCount ;
+        text.reserve( textLength );
+        text.append( io::split( *first , "|").front());
+        std::transform( first + 1 , first + d + k ,
+                        std::inserter( text , text.end()) ,
+                        []( const std::string &read ){
+            return io::split( read , "|" ).front().back();
+        });
+        std::transform( first , last ,
+                        std::inserter( text , text.end()) ,
+                        []( const std::string &read){
+            return io::split( read , "|" ).at( 1 ).back();
+        });
+    }
+    else
+    {
+        std::string text1,text2;
+        const auto frontReadPair = io::split( *first , "|");
+        text1.reserve( k + readsCount ); text2.reserve( k + readsCount );
+        text1.append( frontReadPair.front()) ; text2.append( frontReadPair.at( 1 ));
+        std::for_each( first + 1 , last ,
+                       [&text1,&text2,k]( const std::string &read )
+        {
+            text1.push_back( read.at( k-1 ));
+            text2.push_back( read.at( 2*k ));
+        });
+        text    .append( text1 )
+                .append( text2.cend() - k - d , text2.cend());
+    }
+    text.shrink_to_fit();
+    return text;
+}
+
+template< typename SeqIt >
+std::vector< std::string >
+getMaximalNonBranchingPaths( SeqIt first , SeqIt last )
+{
+    using G = Graph< std::string >;
+    using E = G::Edge;
+    using V = G::Vertex ;
+    std::vector< E > edges;
+    std::for_each( first , last ,
+                   [&edges]( const std::string &line )
+    {
+        auto tokens = io::split( line , " -> ");
+        V src(  tokens.front());
+        for( const auto &target : io::split( tokens.at( 1 ) , ","))
+        {
+            E e( src , V( target ));
+            edges.push_back( e );
+        }
+    });
+    G graph = G( edges );
+    edges.clear();
+    std::vector< std::string > output;
+    std::vector< G::Edges > nonBranchingPaths = graph.extractContigs();
+    std::transform( nonBranchingPaths.cbegin() , nonBranchingPaths.cend() ,
+                    std::inserter( output , std::end( output )) ,
+                    []( const G::Edges &path )->std::string{
+        std::vector< std::string > pathNodes;
+        std::transform( path.cbegin() , path.cend() ,
+                        std::inserter( pathNodes , std::end( pathNodes )) ,
+                        [](  const E &e )->std::string{
+            return e.source().data();
+        });
+        pathNodes.push_back( path.back().target().data());
+        return io::join( pathNodes , " -> ");
+    });
+    return output;
+}
+
 }
 }
 #endif // BA2_HPP
