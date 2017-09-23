@@ -41,6 +41,8 @@ add_executable( ba3k_contigGeneration                   ba3k_contigGeneration.cp
 add_executable( ba3l_ConstructStringSpelledByGappedGenome ba3l_ConstructStringSpelledByGappedGenome.cpp )
 add_executable( ba3m_MaximalNonBranchingPaths           ba3m_MaximalNonBranchingPaths.cpp )
 
+add_executable( ba4a_TranslateRNA2AA                    ba4a_TranslateRNA2AA.cpp                    )
+add_executable( ba4b_SubstringsEncodingAA               ba4b_SubstringsEncodingAA.cpp               )
 
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 

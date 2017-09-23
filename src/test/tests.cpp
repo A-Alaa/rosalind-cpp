@@ -476,3 +476,25 @@ TEST_CASE("Graph Algorithms","[BA3]")
         REQUIRE( setBasedEquality( actual , expected ));
     }**/
 }
+
+TEST_CASE("Protein Processing & Analysis","[BA3]")
+{
+    using namespace test_utils;
+    SECTION("BA4a: Translate an RNA String into an Amino Acid String")
+    {
+        auto input = getFileLines( dataFilePath("ba4a"));
+        auto actual = rosalind::ba4::translateRNA2AA(
+                    input.front().cbegin() , input.front().cend() );
+        auto expected = getFileLines( outputFilePath("ba4a")).front();
+        REQUIRE( actual == expected );
+    }
+    SECTION("BA4b: Find Substrings of a Genome Encoding a Given Amino Acid String")
+    {
+        auto input = getFileLines( dataFilePath("ba4b"));
+        auto actual = rosalind::ba4::substringEncodingAA(
+                    input.front().cbegin() , input.front().cend() ,
+                    input.at( 1 ));
+        auto expected = getFileLines( outputFilePath("ba4b"));
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
+}

@@ -26,6 +26,7 @@
 #include <functional>
 #include <cassert>
 #include <random>
+#include <mutex>
 
 namespace rosalind
 {
@@ -51,10 +52,9 @@ using CountType = std::size_t;
 using RosalindIOType = std::vector< std::string >;
 
 template< size_t Base  >
-auto powi( uint16_t exponent )
+constexpr size_t powi( uint16_t exponent )
 {
-    if( exponent == 0 ) return size_t{1} ;
-    return  Base * powi< Base >( exponent - 1 );
+    return (exponent == 0)? size_t{1} : Base * powi< Base >( exponent - 1);
 }
 
 
