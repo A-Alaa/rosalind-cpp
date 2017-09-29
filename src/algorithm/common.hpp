@@ -38,7 +38,7 @@ const std::array< std::string , 4 > bpMutants = { "CGT" , "AGT" , "ACT" , "ACG"}
 
 const std::array< int , byteCapacity > codeACGT([]{
     std::array< int , byteCapacity > codes;
-    std::generate_n( codes.begin() , byteCapacity , [](){ return -1;});
+    std::fill( codes.begin() , codes.end() , -1 );
     codes['A'] = 0;
     codes['C'] = 1;
     codes['G'] = 2;
@@ -190,6 +190,24 @@ findWithMismatches( const std::string &str ,
 
     return std::string::npos;
 }
+
+template< typename SeqIt >
+std::vector< std::string > asStringsVector( SeqIt firstIt , SeqIt lastIt )
+{
+    std::vector< std::string > stringified;
+    using T = std::remove_reference_t<decltype(*firstIt)>;
+    std::transform( firstIt , lastIt ,
+                    std::inserter( stringified , std::end( stringified )) ,
+                    []( const T &element ) { return std::to_string( element ); } );
+    return stringified;
+}
+
+template< typename Container >
+std::vector< std::string > asStringsVector( const Container &container )
+{
+    return asStringsVector( container.cbegin() , container.cend());
+}
+
 }
 }
 #endif // COMMON_HH

@@ -269,7 +269,7 @@ public:
         using SemiMutableConnections = std::pair< EdgesReference , MutableEdges >;
         using SemiMutableGraph = std::map< Vertex , SemiMutableConnections , GraphComparators >;
         SemiMutableGraph unvisitedEdges;
-        for( auto it = _graph.cbegin() ; it != _graph.cend() ; it++ )
+        for( auto it = _graph.cbegin() ; it != _graph.cend() ; ++it )
             unvisitedEdges.emplace(
                         it->first ,std::make_pair( std::cref( it->second.first ) ,
                                                    std::make_pair( it->second.second ,
@@ -279,7 +279,7 @@ public:
         {
             static typename SemiMutableGraph::iterator it = unvisitedEdges.begin();
             static typename SemiMutableGraph::iterator circularIt = unvisitedEdges.begin();
-            for( ; it != unvisitedEdges.end() ; it++ )
+            for( ; it != unvisitedEdges.end() ; ++it )
             {
                 int unvisitedOutEdgesCount = it->second.second.first.size();
                 int outEdgesCount = it->second.second.second;
@@ -288,7 +288,7 @@ public:
                         unvisitedOutEdgesCount > 0 )
                     return it;
             }
-            for( ; circularIt != unvisitedEdges.end() ; circularIt++ )
+            for( ; circularIt != unvisitedEdges.end() ; ++circularIt )
             {
                 int unvisitedOutEdgesCount = circularIt->second.second.first.size();
                 if( unvisitedOutEdgesCount > 0 )
@@ -729,7 +729,7 @@ std::string kUniversalCircularString( unsigned int k )
     if( k < 64 )
     {
         templateString.reserve( 64 );
-        for( decltype(count) i = 0 ; i < count ; i++ )
+        for( decltype(count) i = 0 ; i < count ; ++i )
         {
             templateString = std::bitset< 64 >( i ).to_string();
             elements.emplace_back( std::prev( templateString.cend() , k ) , templateString.cend());
@@ -738,7 +738,7 @@ std::string kUniversalCircularString( unsigned int k )
     else if( k < 128 )
     {
         templateString.reserve( 128 );
-        for( decltype(count) i = 0 ; i < count ; i++ )
+        for( decltype(count) i = 0 ; i < count ; ++i )
         {
             templateString = std::bitset< 64 >( i ).to_string();
             elements.emplace_back( std::prev( templateString.cend() , k ) , templateString.cend());
@@ -753,7 +753,7 @@ std::string kUniversalCircularString( unsigned int k )
     int truncation = 0;
     while( *std::next(kUniversalString.cbegin(),truncation) ==
            *std::prev(kUniversalString.cend(), truncation + 1))
-        truncation++;
+        ++truncation;
     while( truncation-- > 0 )
         kUniversalString.pop_back();
     return kUniversalString;

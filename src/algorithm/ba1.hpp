@@ -19,7 +19,7 @@ std::vector< std::string > extractKmers( const std::string &text , int k )
 {
     std::vector< std::string > kmers;
     int n = text.length();
-    for ( auto i = 0 ; i < n-k+1 ; i++ )
+    for ( auto i = 0 ; i < n-k+1 ; ++i )
         kmers.push_back( text.substr( i , k ));
     return kmers;
 }
@@ -36,7 +36,7 @@ std::vector< std::string > extractKmers( const std::string &text , int k )
 template< typename T >
 std::string decode( T code , int k ){
     std::string s( k , 0 );
-    for( auto i = 0 ; i < k ; i++ )
+    for( auto i = 0 ; i < k ; ++i )
     {
         s[ k - i - 1 ] = acgt[ code % 4 ];
         code /= 4;
@@ -96,7 +96,7 @@ patternCount( const std::string &sequence , const std::string &pattern )
     IndexType nextIdx = sequence.find( pattern );
     while( nextIdx != std::string::npos )
     {
-        count++;
+        ++count;
         nextIdx = sequence.find( pattern , nextIdx + 1 );
     }
     return count;
@@ -129,7 +129,7 @@ frequentWordsBruteForce( const std::string &sequence , int k )
     std::unordered_map< std::string , int > frequency;
     const auto kmers = extractKmers( sequence , k );
     for( auto &kmer : kmers )
-        frequency[ kmer ]++;
+        ++frequency[ kmer ];
     std::list< std::string > mostFrequentKmers;
     int maxFrequency = 0;
     for( auto &kmer : frequency )
@@ -288,10 +288,10 @@ findClumps( const std::string &input ,
     const CodeType mask = powi< 4 >( k-1 );
     auto wholeSequence = input.c_str();
 
-    for( IndexType i = 0; i < k - 1 ; i++ )
+    for( IndexType i = 0; i < k - 1 ; ++i )
         sequenceCode = sequenceCode*4 + codeACGT[ wholeSequence[ i ]];
 
-    for( IndexType i = k - 1 ; i < input.size() ; i++ )
+    for( IndexType i = k - 1 ; i < input.size() ; ++i )
     {
         sequenceCode = ( sequenceCode % mask ) * 4 + codeACGT[wholeSequence[i]];
         window.push_back( sequenceCode );
@@ -349,7 +349,7 @@ skewDiagram( const std::string &sequence , char c1 = 'G', char c2 = 'C' )
     peak min( {} , std::numeric_limits< int >::max());
     peak max( {} , std::numeric_limits< int >::min());
     int skewness = 0;
-    for( IndexType i = 0 ; i < sequence.size() ; i++ )
+    for( IndexType i = 0 ; i < sequence.size() ; ++i )
     {
         if( sequence[ i ] == c1 && ++skewness > max.second )
         {
@@ -390,7 +390,7 @@ hammingDistance( const std::string &s1 , const std::string &s2 )
 {
     const auto size = ( s1.size() < s2.size())? s1.size() : s2.size();
     CountType distance = 0;
-    for( IndexType i = 0 ; i < size ; i++ )
+    for( IndexType i = 0 ; i < size ; ++i )
         distance += s1[ i ] != s2[ i ];
     return distance;
 }
@@ -406,7 +406,7 @@ CountType
 hammingDistance( const char * const s1 , const char * const s2 , size_t size )
 {
     CountType distance = 0;
-    for( IndexType i = 0 ; i < size ; i++ )
+    for( IndexType i = 0 ; i < size ; ++i )
         distance += s1[ i ] != s2[ i ];
     return distance;
 }
@@ -438,7 +438,7 @@ approximatePatternMatching( const std::string &sequence ,
     const IndexType indexSpace = sequence.size() - pattern.size();
     auto cSequence = sequence.c_str();
     auto cPattern  = pattern .c_str();
-    for( IndexType i = 0 ; i < indexSpace + 1 ; i++ )
+    for( IndexType i = 0 ; i < indexSpace + 1 ; ++i )
         if( hammingDistance( cSequence + i , cPattern , size ) <= distance )
             indices.push_back( i );
     return indices;
@@ -484,12 +484,12 @@ frequentWordsWithMismatches( const std::string &sequence ,
     auto cSequence = sequence.c_str();
     std::pair< std::list< std::string > , int > mostFrequentKmers;
     const CodeType kmerSpace = static_cast< CodeType >( std::pow( 4 , k ));
-    for( IndexType i = 0 ; i < kmerSpace ; i++ )
+    for( IndexType i = 0 ; i < kmerSpace ; ++i )
     {
         int occurance = 0;
         auto kmer = decode( i , k );
         auto cKmer = kmer.c_str();
-        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; j++ )
+        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; ++j )
             occurance += hammingDistance( cSequence + j , cKmer , k ) <= d;
 
         if( occurance > mostFrequentKmers.second )
@@ -532,7 +532,7 @@ frequentWordsWithMismatchesAndReverseComplement(
     auto cSequence = sequence.c_str();
     std::pair< std::list< std::string > , int > mostFrequentKmers;
     const CodeType kmerSpace = powi< 4 >( k );
-    for( IndexType i = 0 ; i < kmerSpace ; i++ )
+    for( IndexType i = 0 ; i < kmerSpace ; ++i )
     {
         int occurance = 0;
         auto kmer = decode( i , k );
@@ -540,7 +540,7 @@ frequentWordsWithMismatchesAndReverseComplement(
         auto cKmer = kmer.c_str();
         auto crKmer = rKmer.c_str();
 
-        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; j++ )
+        for( IndexType j = 0 ; j < sequence.size() - k + 1 ; ++j )
         {
             occurance += hammingDistance( cSequence + j , cKmer , k ) <= d;
             occurance += hammingDistance( cSequence + j , crKmer , k ) <= d ;
@@ -587,7 +587,7 @@ stringFrequencyArray( const std::string & sequence , unsigned int k )
     auto kmerSpace = powi< 4 >( k );
     std::vector< CountType > frequencyArray( kmerSpace , 0 );
     for( const auto &kmer : extractKmers( sequence , k ))
-        frequencyArray[ encode( kmer )]++;
+        ++frequencyArray[ encode( kmer )];
     return frequencyArray;
 }
 
@@ -622,7 +622,7 @@ dNeighborhood( const std::string &sequence , unsigned int d )
         mutants.insert( sequence );
         if( height > 0 )
         {
-            for( IndexType i = 0, until = sequence.size() ; i < until ; i++)
+            for( IndexType i = 0, until = sequence.size() ; i < until ; ++i)
             {
                 if( conserved[ i ] ) continue;
                 else conserved[ i ] = true;
@@ -667,7 +667,7 @@ minimumCoinsChange( int value , const std::vector< int > &domination )
     std::vector< CountType > minCount( value + 1 ,
                                        std::numeric_limits< CountType >::max());
     minCount[ 0 ] = 0;
-    for( auto money = 1 ; money <= value ; money++ )
+    for( auto money = 1 ; money <= value ; ++money )
     {
         auto min = std::numeric_limits< CountType >::max();
         for( auto coin : domination )

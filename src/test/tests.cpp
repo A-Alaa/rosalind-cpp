@@ -369,7 +369,7 @@ TEST_CASE("Graph Algorithms","[BA3]")
             return std::string("\nExpected:") + p.first + "\nActual:" + p.second; };
 
         CAPTURE( firstMismatch());
-//        REQUIRE( setBasedEquality( expected , _actual ));
+        //        REQUIRE( setBasedEquality( expected , _actual ));
     }
 
     SECTION("BA3e: De Bruijn Overlap Strings Graph")
@@ -496,5 +496,26 @@ TEST_CASE("Protein Processing & Analysis","[BA3]")
                     input.at( 1 ));
         auto expected = getFileLines( outputFilePath("ba4b"));
         REQUIRE( setBasedEquality( actual , expected ));
+    }
+    SECTION("BA4c: CycloSpectrum")
+    {
+        auto input = getFileLines( dataFilePath("ba4c")).front();
+        auto actual = rosalind::ba4::theoriticalCycloSpectrum(
+                    input.cbegin() , input.cend());
+        auto expected =
+                rosalind::io::split( getFileLines( outputFilePath("ba4c")).front() ,
+                                     " ");
+        decltype( actual ) _expectedInts;
+        std::transform( expected.cbegin() , expected.cend() ,
+                        std::back_inserter( _expectedInts ) ,
+                        []( const std::string &s ) { return std::stoi( s ); });
+        REQUIRE( setBasedEquality( actual , _expectedInts ));
+    }
+    SECTION("BA4d: Spectrums Count")
+    {
+        auto input = getFileLines( dataFilePath("ba4d")).front();
+        auto actual = rosalind::ba4::spectrumsCountFromTotalMass( std::stoi( input ));
+        auto expected = std::stoi( getFileLines( outputFilePath("ba4d")).front());
+        REQUIRE( actual == expected );
     }
 }

@@ -40,8 +40,8 @@ consensus( const std::vector< std::string > &kmers )
 
     std::vector< std::array< CountType , 4 >> frequency( k );
     for( const auto &kmer : kmers )
-        for( unsigned int i = 0 ; i < k ; i++ )
-            frequency[i][ codeACGT[ kmer[ i ]]]++;
+        for( unsigned int i = 0 ; i < k ; ++i )
+            ++frequency[i][ codeACGT[ kmer[ i ]]];
     std::string consensus;
     std::transform( std::begin( frequency ) , std::end( frequency ) ,
                     std::inserter( consensus , consensus.end()) ,
@@ -106,9 +106,9 @@ makeProfile( SeqIt firstIt , SeqIt lastIt ,
                          [k]( const std::string &s){ return s.length() == k; }));
 
     std::vector< std::array< float , 4 >> profile( k );
-    for( auto it = firstIt ; it != lastIt ; it++ )
+    for( auto it = firstIt ; it != lastIt ; ++it )
         for( IndexType i = 0 ; i < k ; ++i )
-            profile[i][ codeACGT[ (*it)[ i ]]]++;
+            ++profile[i][ codeACGT[ (*it)[ i ]]];
 
     for( auto &histo : profile )
         for( float &value : histo )
@@ -135,7 +135,7 @@ makeProfileWithException( SeqIt firstIt , SeqIt lastIt ,
         if ( it == exceptIt ) continue;
         else
             for( IndexType i = 0 ; i < k ; ++i )
-                profile[i][ codeACGT[ (*it)[ i ]]]++;
+                ++profile[i][ codeACGT[ (*it)[ i ]]];
 
     for( auto &histo : profile )
         for( float &value : histo )
@@ -323,14 +323,14 @@ profileMostProbableKmer( const std::string &sequence ,
     auto convolute = [k,&profile]( const std::string &kmer )
     {
         float product = 1.f;
-        for( IndexType i = 0 ; i < k ; i++ )
+        for( IndexType i = 0 ; i < k ; ++i )
             product *= profile.at( i ).at( codeACGT[ kmer[ i ]] );
         return product;
     };
 
     IndexType maxIndex = 0;
     float maxProbability = 0;
-    for( IndexType i = 0 ; i <= L - k ; i++ )
+    for( IndexType i = 0 ; i <= L - k ; ++i )
     {
         float probability = convolute( kmers[i] );
         if( probability > maxProbability )
@@ -359,7 +359,7 @@ profileMostProbableKmer( const RosalindIOType &input )
     auto t = io::split( input[5] , ' ');
     std::vector< std::array< float , 4 >> profile;
 
-    for( auto i = 0 ; i < k ; i++ )
+    for( auto i = 0 ; i < k ; ++i )
         profile.push_back( { std::strtof( a[i].c_str() , 0 ),
                              std::strtof( c[i].c_str() , 0 ),
                              std::strtof( g[i].c_str() , 0 ),
@@ -394,7 +394,7 @@ greedyMotifSearch( SeqIt firstIt , SeqIt lastIt ,
     {
         decltype( bestMotifs ) motifs;
         motifs.push_back( motif );
-        for( unsigned int j = 1 ; j < t ; j++ )
+        for( unsigned int j = 1 ; j < t ; ++j )
         {
             using V = std::vector< std::string >;
             auto profile = makeProfile( motifs.cbegin() ,
