@@ -515,7 +515,7 @@ TEST_CASE("Protein Processing & Analysis","[BA3]")
     {
         auto input = getFileLines( dataFilePath("ba4d")).front();
         auto actual = rosalind::ba4::spectrumsCountFromTotalMass( std::stoi( input ));
-        auto expected = std::stoi( getFileLines( outputFilePath("ba4d")).front());
+        auto expected = std::stoull( getFileLines( outputFilePath("ba4d")).front());
         REQUIRE( actual == expected );
     }
 }
