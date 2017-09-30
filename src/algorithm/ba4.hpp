@@ -126,10 +126,9 @@ substringEncodingAA( CharIt genomeFirstIt ,
     return results;
 }
 
-template< typename CharIt >
 std::vector< int >
-theoriticalCycloSpectrum( const CharIt aaFirstIt ,
-                          const CharIt aaLastIt )
+theoriticalCycloSpectrum( const std::vector< uint8_t >::const_iterator aaFirstIt ,
+                          const std::vector< uint8_t >::const_iterator aaLastIt )
 {
     const size_t n = std::distance( aaFirstIt , aaLastIt );
     assert( n > 0 );
@@ -143,17 +142,33 @@ theoriticalCycloSpectrum( const CharIt aaFirstIt ,
             int mass = 0;
             for( auto i = 0 ; i < fragmentSize ; ++i )
             {
-                mass += massTable.at( *currentIt );
+                mass += *currentIt ;
                 if( ++currentIt == aaLastIt )
                     currentIt = aaFirstIt;
             }
             spectrum.push_back( mass );
         }
     spectrum.push_back( std::accumulate( aaFirstIt , aaLastIt , 0 ,
-                                         []( int mass , char aa ){
-        return mass + massTable.at( aa );
+                                         []( int mass , uint8_t aa ){
+        return mass + aa;
     }));
+    std::sort( spectrum.begin() , spectrum.end());
     return spectrum;
+}
+
+template< typename CharIt ,
+          typename std::enable_if<std::is_same< typename CharIt::value_type , char >::value , int >::type = 0 >
+std::vector< int >
+theoriticalCycloSpectrum( const CharIt aaFirstIt ,
+                          const CharIt aaLastIt )
+{
+    std::vector< uint8_t > peptide;
+    std::transform( aaFirstIt , aaLastIt ,
+                    std::back_inserter( peptide ) ,
+                    []( char aa ){
+        return massTable.at( aa );
+    });
+    return theoriticalCycloSpectrum( peptide.cbegin() , peptide.cend());
 }
 
 uint64_t spectrumsCountFromTotalMass( int mass )
@@ -171,6 +186,66 @@ uint64_t spectrumsCountFromTotalMass( int mass )
                 peptidesCount[ i ] += peptidesCount.at( parentMass );
         }
     return peptidesCount.at( mass );
+}
+
+template< typename SeqIt >
+std::vector< std::vector< uint8_t >>
+massRepresentedPeptidesFromSpectrum( SeqIt massFirstIt , SeqIt massLastIt )
+{
+    assert( std::is_sorted( massFirstIt , massLastIt ));
+    const std::set< int > spectrumSet{ massFirstIt , massLastIt };
+    const int totalMass = *std::max_element( massFirstIt , massLastIt );
+    std::set< uint8_t > aaSet;
+    std::copy_if( aaMassesUnique.cbegin() , aaMassesUnique.cend() ,
+                  std::inserter( aaSet , aaSet.end()) ,
+                  [&]( uint8_t m ){
+        return std::find( massFirstIt , massLastIt , m ) != massLastIt;
+    });
+    std::vector< std::vector< uint8_t >> peptides;
+    std::function<void(std::vector< uint8_t >&,int)> aaExpand;
+    aaExpand = [&]( const std::vector< uint8_t > &fragment , int mass )->void
+    {
+        if ( mass == totalMass )
+        {
+            auto spectrum = theoriticalCycloSpectrum( fragment.cbegin() , fragment.cend());
+            if( std::equal( massFirstIt , massLastIt , spectrum.cbegin() , spectrum.cend()))
+                peptides.emplace_back( std::move( fragment ));
+        }
+
+        else
+        {
+            for( const uint8_t aa : aaSet )
+            {
+                if( spectrumSet.find( mass + aa ) != spectrumSet.cend())
+                {
+                    std::vector< uint8_t > newFragment = fragment;
+                    newFragment.push_back( aa );
+                    aaExpand( newFragment , mass + aa );
+                }
+            }
+        }
+        //                else
+        //                {
+        //                    std::cout <<"mass not found:" << mass << std::endl;
+        //                    std::cout << io::join( io::asStringsVector( toHit ),"|" ) << std::endl;
+        //                }
+    };
+    std::vector< uint8_t > v;
+    aaExpand( v , 0  );
+    return peptides;
+}
+
+std::vector< std::vector< uint8_t >>
+massRepresentedPeptidesFromSpectrum( const std::string &line )
+{
+    std::vector< int > massesInt;
+    std::vector< std::string > masses = io::split( line , " ");
+    std::transform( masses.cbegin() , masses.cend() ,
+                    std::back_inserter( massesInt ),
+                    []( const std::string &mass ){
+        return std::stoi( mass );
+    });
+    return massRepresentedPeptidesFromSpectrum( massesInt.cbegin() , massesInt.cend());
 }
 
 }

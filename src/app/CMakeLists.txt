@@ -45,6 +45,10 @@ add_executable( ba4a_TranslateRNA2AA                    ba4a_TranslateRNA2AA.cpp
 add_executable( ba4b_SubstringsEncodingAA               ba4b_SubstringsEncodingAA.cpp               )
 add_executable( ba4c_CyclicPeptideTheoriticalSpectrum   ba4c_CyclicPeptideTheoriticalSpectrum.cpp   )
 add_executable( ba4d_LinearPeptidesCountsFromTotalMass  ba4d_LinearPeptidesCountsFromTotalMass.cpp  )
+add_executable( ba4e_PeptidesFromSpectrum               ba4e_PeptidesFromSpectrum.cpp               )
+
+
+
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 
 

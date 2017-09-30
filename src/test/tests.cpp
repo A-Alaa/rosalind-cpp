@@ -518,4 +518,22 @@ TEST_CASE("Protein Processing & Analysis","[BA3]")
         auto expected = std::stoull( getFileLines( outputFilePath("ba4d")).front());
         REQUIRE( actual == expected );
     }
+    SECTION("BA4e: Peptides from spectrum.")
+    {
+        auto input = getFileLines( dataFilePath("ba4e")).front();
+        auto _actual = rosalind::ba4::massRepresentedPeptidesFromSpectrum( input );
+        auto expected = rosalind::io::split( getFileLines( outputFilePath("ba4e")).front(), " ");
+        std::vector< std::string > actual;
+        for( const auto &peptide : _actual )
+            actual.emplace_back( rosalind::io::join(
+                                     rosalind::io::asStringsVector( peptide ), "-"));
+        CAPTURE( actual.size());
+        CAPTURE( expected.size());
+        auto firstMismatch = [expected,actual](){
+            auto p = setBasedFirstMismatch( expected , actual );
+            return std::string("\nExpected:") + p.first + "\nActual:" + p.second; };
+
+        CAPTURE( firstMismatch());
+        REQUIRE( setBasedEquality( actual , expected ));
+    }
 }
