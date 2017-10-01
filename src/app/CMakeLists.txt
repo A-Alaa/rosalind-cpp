@@ -46,6 +46,9 @@ add_executable( ba4b_SubstringsEncodingAA               ba4b_SubstringsEncodingA
 add_executable( ba4c_CyclicPeptideTheoriticalSpectrum   ba4c_CyclicPeptideTheoriticalSpectrum.cpp   )
 add_executable( ba4d_LinearPeptidesCountsFromTotalMass  ba4d_LinearPeptidesCountsFromTotalMass.cpp  )
 add_executable( ba4e_PeptidesFromSpectrum               ba4e_PeptidesFromSpectrum.cpp               )
+add_executable( ba4f_CyclicPeptideScoring               ba4f_CyclicPeptideScoring.cpp               )
+add_executable( ba4g_LeaderboardCyclopeptideSequencing  ba4g_LeaderboardCyclopeptideSequencing.cpp  )
+add_executable( ba4h_SpectralConvolutionProblem         ba4h_SpectralConvolutionProblem.cpp         )
 
 
 

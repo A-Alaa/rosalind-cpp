@@ -131,10 +131,10 @@ theoriticalCycloSpectrum( const std::vector< uint8_t >::const_iterator aaFirstIt
                           const std::vector< uint8_t >::const_iterator aaLastIt )
 {
     const size_t n = std::distance( aaFirstIt , aaLastIt );
-    assert( n > 0 );
+    assert( n >= 0 );
     std::vector< int > spectrum;
     spectrum.reserve( n *  n - n + 1 );
-    spectrum.push_back( 0 );
+    if( n > 0 ) spectrum.push_back( 0 );
     for( auto fragmentSize = 1 ; fragmentSize < n ; ++fragmentSize )
         for( auto seedIt = aaFirstIt; seedIt != aaLastIt ; ++seedIt )
         {
@@ -211,24 +211,14 @@ massRepresentedPeptidesFromSpectrum( SeqIt massFirstIt , SeqIt massLastIt )
             if( std::equal( massFirstIt , massLastIt , spectrum.cbegin() , spectrum.cend()))
                 peptides.emplace_back( std::move( fragment ));
         }
-
         else
-        {
             for( const uint8_t aa : aaSet )
-            {
                 if( spectrumSet.find( mass + aa ) != spectrumSet.cend())
                 {
                     std::vector< uint8_t > newFragment = fragment;
                     newFragment.push_back( aa );
                     aaExpand( newFragment , mass + aa );
                 }
-            }
-        }
-        //                else
-        //                {
-        //                    std::cout <<"mass not found:" << mass << std::endl;
-        //                    std::cout << io::join( io::asStringsVector( toHit ),"|" ) << std::endl;
-        //                }
     };
     std::vector< uint8_t > v;
     aaExpand( v , 0  );
@@ -246,6 +236,121 @@ massRepresentedPeptidesFromSpectrum( const std::string &line )
         return std::stoi( mass );
     });
     return massRepresentedPeptidesFromSpectrum( massesInt.cbegin() , massesInt.cend());
+}
+
+template< typename PeptideType , typename MassIt >
+int scoreCyclicPeptideSpectrum( const PeptideType &peptide ,
+                                MassIt spectrumFirst ,
+                                MassIt spectrumLast )
+{
+    assert( std::is_sorted( spectrumFirst , spectrumLast ));
+    std::vector< int > idealSpectrum =
+            theoriticalCycloSpectrum( peptide.cbegin() , peptide.cend());
+    int score = 0 ;
+    for( auto idealIt = idealSpectrum.cbegin() , expIt = spectrumFirst ;
+         idealIt != idealSpectrum.cend() && expIt != spectrumLast ;  )
+        if( *idealIt == *expIt )
+        {
+            ++score;
+            ++idealIt;
+            ++expIt;
+        }
+        else if( *idealIt < *expIt )
+            ++idealIt;
+        else
+            ++expIt;
+    return score;
+}
+
+template< typename MassIt ,
+          typename PeptideType = std::vector< uint8_t > >
+typename std::vector< std::pair< PeptideType , int >>
+leaderboardCyclopeptideSequencing( int n ,
+                                   MassIt spectrumFirst ,
+                                   MassIt spectrumLast  )
+{
+    using LeaderboardType = std::multimap< int , std::pair< PeptideType , int > , std::greater< int >>;
+    assert( std::is_sorted( spectrumFirst , spectrumLast ));
+    const int totalMass = *std::max_element( spectrumFirst , spectrumLast );
+    auto score = [spectrumFirst,spectrumLast]( const PeptideType &p )->int{
+        return scoreCyclicPeptideSpectrum( p , spectrumFirst , spectrumLast );
+    };
+
+    PeptideType _0peptide;
+    LeaderboardType leaderboard;
+    leaderboard.emplace( score( _0peptide ) , std::make_pair( _0peptide , 0 ));
+
+    bool isSaturated = false;
+    while( !isSaturated )
+    {
+        std::printf("\n----------------\n[size:%d]\n",leaderboard.size());
+        LeaderboardType newLeaderboard;
+        for( auto it = leaderboard.cbegin() ; it != leaderboard.cend() ; ++it )
+        {
+            int currentMass = it->second.second;
+            if( currentMass == totalMass )
+                newLeaderboard.emplace( it->first ,
+                                        std::make_pair(
+                                            std::move( it->second.first ) ,
+                                            it->second.second ));
+            else
+                for( const uint8_t aa : aaMassesUnique )
+                    if( currentMass + aa <= totalMass )
+                    {
+                        PeptideType newPeptide = it->second.first;
+                        newPeptide.push_back( aa );
+                        int newScore = score( newPeptide );
+                        newLeaderboard.emplace( newScore ,
+                                                std::make_pair( std::move( newPeptide ) ,
+                                                                currentMass + aa ));
+                    }
+        }
+        leaderboard = std::move( newLeaderboard );
+        std::pair< int ,  int > topNCounter{0,-1};
+        uint64_t candidates = 0;
+        auto it = leaderboard.begin();
+        isSaturated = true;
+        const uint64_t maxCandidates = n * std::sqrt( n );
+        while( topNCounter.first < n && it != leaderboard.end() && ++candidates < maxCandidates )
+        {
+            if( it->second.second != totalMass )
+                isSaturated = false;
+            int pScore = it->first;
+            if( pScore != topNCounter.second )
+            {
+                topNCounter.second = pScore;
+                ++topNCounter.first;
+            }
+            ++it;
+        }
+        leaderboard.erase( it , leaderboard.end());
+    }
+
+    std::vector< std::pair< PeptideType , int >> leadingPeptides;
+    std::transform( leaderboard.cbegin(), leaderboard.cend() ,
+                    std::back_inserter( leadingPeptides ) ,
+                    []( const std::pair< int , std::pair< PeptideType , int >> &p ){
+        return std::make_pair( p.second.first , p.first );
+    });
+    return leadingPeptides;
+}
+
+template< typename MassIt >
+std::vector< int >
+spectralConvoultion( MassIt spectrumFirst , MassIt spectrumLast )
+{
+    std::map< int , int > differences;
+    for( auto it1 = spectrumFirst ; it1 != spectrumLast ; ++it1)
+        for( auto it2 = spectrumFirst ; it2 != spectrumLast ; ++it2)
+            if( *it2 > *it1 ) ++differences[ *it2 - *it1 ];
+    std::multimap< int , int , std::greater< int >> differencesMultiplicitySorted;
+    for( auto it = differences.cbegin() ; it != differences.cend() ; ++it )
+        differencesMultiplicitySorted.emplace( it->second , it->first );
+    std::vector< int > convolution;
+    for( auto it = differencesMultiplicitySorted.cbegin() ;
+         it != differencesMultiplicitySorted.cend() ; ++it )
+        std::fill_n( std::back_inserter( convolution ) , it->first , it->second );
+    return convolution;
 }
 
 }
