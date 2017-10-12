@@ -195,10 +195,13 @@ template< typename SeqIt >
 std::vector< std::string > asStringsVector( SeqIt firstIt , SeqIt lastIt )
 {
     std::vector< std::string > stringified;
-    using T = std::remove_reference_t<decltype(*firstIt)>;
-    std::transform( firstIt , lastIt ,
-                    std::inserter( stringified , std::end( stringified )) ,
-                    []( const T &element ) { return std::to_string( element ); } );
+    if( std::distance( firstIt , lastIt ) > 0 )
+    {
+        using T = std::remove_reference_t<decltype(*firstIt)>;
+        std::transform( firstIt , lastIt ,
+                        std::inserter( stringified , std::end( stringified )) ,
+                        []( const T &element ) { return std::to_string( element ); } );
+    }
     return stringified;
 }
 

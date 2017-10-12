@@ -49,7 +49,7 @@ add_executable( ba4e_PeptidesFromSpectrum               ba4e_PeptidesFromSpectru
 add_executable( ba4f_CyclicPeptideScoring               ba4f_CyclicPeptideScoring.cpp               )
 add_executable( ba4g_LeaderboardCyclopeptideSequencing  ba4g_LeaderboardCyclopeptideSequencing.cpp  )
 add_executable( ba4h_SpectralConvolutionProblem         ba4h_SpectralConvolutionProblem.cpp         )
-
+add_executable( ba4i_ConvolutionCyclopeptideSequencing  ba4i_ConvolutionCyclopeptideSequencing.cpp )
 
 
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )

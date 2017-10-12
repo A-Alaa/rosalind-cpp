@@ -20,6 +20,7 @@ const std::array< int , byteCapacity > codeGACUT([]{
     return codes;
 }());
 
+
 const std::array< uint8_t , byteCapacity > massTable([]{
     std::array< uint8_t , byteCapacity > masses;
     std::fill( masses.begin() , masses.end() , 0 );
@@ -29,6 +30,9 @@ const std::array< uint8_t , byteCapacity > massTable([]{
     masses['P']=97; masses['I']=113; masses['Q']=128; masses['F']=147; masses['K']=128;
     return masses;
 }());
+
+constexpr uint8_t maxAA = 200;
+constexpr uint8_t minAA = 57;
 
 const std::array< uint8_t , 20 > aaMasses([]{
     std::array< uint8_t , 20 > _aaMasses;
@@ -263,11 +267,13 @@ int scoreCyclicPeptideSpectrum( const PeptideType &peptide ,
 }
 
 template< typename MassIt ,
-          typename PeptideType = std::vector< uint8_t > >
+          typename PeptideType = std::vector< uint8_t >,
+          typename ConstituentAAType = decltype( aaMassesUnique ) >
 typename std::vector< std::pair< PeptideType , int >>
 leaderboardCyclopeptideSequencing( int n ,
                                    MassIt spectrumFirst ,
-                                   MassIt spectrumLast  )
+                                   MassIt spectrumLast  ,
+                                   const ConstituentAAType &constituentAA = aaMassesUnique )
 {
     using LeaderboardType = std::multimap< int , std::pair< PeptideType , int > , std::greater< int >>;
     assert( std::is_sorted( spectrumFirst , spectrumLast ));
@@ -294,7 +300,7 @@ leaderboardCyclopeptideSequencing( int n ,
                                             std::move( it->second.first ) ,
                                             it->second.second ));
             else
-                for( const uint8_t aa : aaMassesUnique )
+                for( const uint8_t aa : constituentAA )
                     if( currentMass + aa <= totalMass )
                     {
                         PeptideType newPeptide = it->second.first;
@@ -335,9 +341,10 @@ leaderboardCyclopeptideSequencing( int n ,
     return leadingPeptides;
 }
 
+
 template< typename MassIt >
-std::vector< int >
-spectralConvoultion( MassIt spectrumFirst , MassIt spectrumLast )
+std::multimap< int , int , std::greater< int >>
+spectralConvoultionWithMultiplicity( MassIt spectrumFirst , MassIt spectrumLast )
 {
     std::map< int , int > differences;
     for( auto it1 = spectrumFirst ; it1 != spectrumLast ; ++it1)
@@ -346,13 +353,44 @@ spectralConvoultion( MassIt spectrumFirst , MassIt spectrumLast )
     std::multimap< int , int , std::greater< int >> differencesMultiplicitySorted;
     for( auto it = differences.cbegin() ; it != differences.cend() ; ++it )
         differencesMultiplicitySorted.emplace( it->second , it->first );
+    return differencesMultiplicitySorted;
+}
+
+template< typename MassIt >
+std::vector< int >
+spectralConvoultion( MassIt spectrumFirst , MassIt spectrumLast )
+{
+    const auto withMultiplicitySorted = spectralConvoultionWithMultiplicity( spectrumFirst , spectrumLast );
     std::vector< int > convolution;
-    for( auto it = differencesMultiplicitySorted.cbegin() ;
-         it != differencesMultiplicitySorted.cend() ; ++it )
+    for( auto it = withMultiplicitySorted.cbegin() ;
+         it != withMultiplicitySorted.cend() ; ++it )
         std::fill_n( std::back_inserter( convolution ) , it->first , it->second );
     return convolution;
 }
 
+template< typename MassIt ,
+          typename PeptideType = std::vector< uint8_t > >
+typename std::vector< std::pair< PeptideType , int >>
+convoultionCyclopeptideSequenceing( int m , int n , MassIt spectrumFirst , MassIt spectrumLast )
+{
+    assert( m > 0 && n > 0 && std::distance( spectrumFirst , spectrumLast ) > 0 );
+    const auto withMultiplicitySorted = spectralConvoultionWithMultiplicity( spectrumFirst , spectrumLast );
+    std::vector< uint8_t > topMAA;
+    int lastMultiplicity = -1;
+    int rank = 0;
+    for( auto it = withMultiplicitySorted.cbegin() ;
+         it != withMultiplicitySorted.cend() &&
+         ( rank < m  || lastMultiplicity == it->first ); ++it )
+        if( aaMassesUnique.find( it->second ) != aaMassesUnique.cend()   )
+        {
+            rank += lastMultiplicity == it->first;
+            topMAA.push_back( it->second );
+            lastMultiplicity = it->first;
+        }
+
+
+    return leaderboardCyclopeptideSequencing( n , spectrumFirst , spectrumLast , topMAA );
+}
 }
 }
 
