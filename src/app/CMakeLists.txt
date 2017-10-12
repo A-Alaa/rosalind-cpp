@@ -49,8 +49,11 @@ add_executable( ba4e_PeptidesFromSpectrum               ba4e_PeptidesFromSpectru
 add_executable( ba4f_CyclicPeptideScoring               ba4f_CyclicPeptideScoring.cpp               )
 add_executable( ba4g_LeaderboardCyclopeptideSequencing  ba4g_LeaderboardCyclopeptideSequencing.cpp  )
 add_executable( ba4h_SpectralConvolutionProblem         ba4h_SpectralConvolutionProblem.cpp         )
-add_executable( ba4i_ConvolutionCyclopeptideSequencing  ba4i_ConvolutionCyclopeptideSequencing.cpp )
-
+add_executable( ba4i_ConvolutionCyclopeptideSequencing  ba4i_ConvolutionCyclopeptideSequencing.cpp  )
+add_executable( ba4j_TheoriticalLinearSpectrum          ba4j_TheoriticalLinearSpectrum.cpp          )
+add_executable( ba4k_ScoreLinearPeptideSpectrum         ba4k_ScoreLinearPeptideSpectrum.cpp         )
+add_executable( ba4l_TrimLeaderboardAlgorithm           ba4l_TrimLeaderboardAlgorithm.cpp           )
+add_executable( ba4m_TurnpikeProblem                    ba4m_TurnpikeProblem.cpp                    )
 
 add_executable( ba5a_MinCoinsChange                     ba5a_MinCoinsChange.cpp                     )
 

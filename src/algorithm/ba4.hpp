@@ -8,6 +8,7 @@ namespace ba4
 {
 constexpr std::array< const char , 4 > gacu = { 'G' , 'A' , 'C' , 'U' };
 constexpr std::array< const char , 4 > gact = { 'G' , 'A' , 'C' , 'T' };
+constexpr int maxLeaderboardSize = rosalind::powi< 2 >( 13 ); // 8K
 
 const std::array< int , byteCapacity > codeGACUT([]{
     std::array< int , byteCapacity > codes;
@@ -266,6 +267,32 @@ int scoreCyclicPeptideSpectrum( const PeptideType &peptide ,
     return score;
 }
 
+template< typename LeaderboardType ,
+          typename Predicate >
+bool trimLeaderboard( LeaderboardType &leaderboard ,
+                      int n  , Predicate predicate )
+{
+    std::pair< int ,  int > topNCounter{0,-1};
+    int candidates = 0;
+    auto it = leaderboard.begin();
+    bool predicateValue = true;
+    while( topNCounter.first < n && it != leaderboard.end() && ++candidates <= maxLeaderboardSize )
+    {
+        if( !predicate( it->second.second ))
+            predicateValue = false;
+        int pScore = it->first;
+        if( pScore != topNCounter.second )
+        {
+            topNCounter.second = pScore;
+            ++topNCounter.first;
+        }
+        ++it;
+    }
+    if( it != leaderboard.end()) std::advance( it , 1 );
+    leaderboard.erase( it , leaderboard.end());
+    return predicateValue;
+}
+
 template< typename MassIt ,
           typename PeptideType = std::vector< uint8_t >,
           typename ConstituentAAType = decltype( aaMassesUnique ) >
@@ -286,8 +313,7 @@ leaderboardCyclopeptideSequencing( int n ,
     LeaderboardType leaderboard;
     leaderboard.emplace( score( _0peptide ) , std::make_pair( _0peptide , 0 ));
 
-    bool isSaturated = false;
-    while( !isSaturated )
+    do
     {
         std::printf("\n----------------\n[size:%d]\n",leaderboard.size());
         LeaderboardType newLeaderboard;
@@ -312,25 +338,7 @@ leaderboardCyclopeptideSequencing( int n ,
                     }
         }
         leaderboard = std::move( newLeaderboard );
-        std::pair< int ,  int > topNCounter{0,-1};
-        uint64_t candidates = 0;
-        auto it = leaderboard.begin();
-        isSaturated = true;
-        const uint64_t maxCandidates = n * std::sqrt( n );
-        while( topNCounter.first < n && it != leaderboard.end() && ++candidates < maxCandidates )
-        {
-            if( it->second.second != totalMass )
-                isSaturated = false;
-            int pScore = it->first;
-            if( pScore != topNCounter.second )
-            {
-                topNCounter.second = pScore;
-                ++topNCounter.first;
-            }
-            ++it;
-        }
-        leaderboard.erase( it , leaderboard.end());
-    }
+    }while( !trimLeaderboard( leaderboard , n  , [totalMass]( int mass ){ return mass != totalMass; }));
 
     std::vector< std::pair< PeptideType , int >> leadingPeptides;
     std::transform( leaderboard.cbegin(), leaderboard.cend() ,
@@ -391,6 +399,82 @@ convoultionCyclopeptideSequenceing( int m , int n , MassIt spectrumFirst , MassI
 
     return leaderboardCyclopeptideSequencing( n , spectrumFirst , spectrumLast , topMAA );
 }
+
+std::vector< int >
+theoriticalLinearSpectrum( const std::vector< uint8_t >::const_iterator aaFirstIt ,
+                           const std::vector< uint8_t >::const_iterator aaLastIt )
+{
+    const size_t n = std::distance( aaFirstIt , aaLastIt );
+    assert( n >= 0 );
+    std::vector< int > spectrum;
+    spectrum.reserve( 0.5 *  n * ( n + 1 ));
+    if( n > 0 ) spectrum.push_back( 0 );
+
+    for( auto seedIt = aaFirstIt; seedIt != aaLastIt ; ++seedIt )
+    {
+        int mass = 0;
+        for( auto terminalIt = seedIt ; terminalIt != aaLastIt ; ++terminalIt )
+        {
+            mass += *terminalIt ;
+            spectrum.push_back( mass );
+        }
+    }
+    std::sort( spectrum.begin() , spectrum.end());
+    return spectrum;
+}
+
+template< typename CharIt ,
+          typename std::enable_if<std::is_same< typename CharIt::value_type , char >::value , int >::type = 0 >
+std::vector< int >
+theoriticalLinearSpectrum( const CharIt aaFirstIt ,
+                           const CharIt aaLastIt )
+{
+    std::vector< uint8_t > peptide;
+    std::transform( aaFirstIt , aaLastIt ,
+                    std::back_inserter( peptide ) ,
+                    []( char aa ){
+        return massTable.at( aa );
+    });
+    return theoriticalLinearSpectrum( peptide.cbegin() , peptide.cend());
+}
+
+template< typename PeptideType , typename MassIt >
+int scoreLinearPeptideSpectrum( const PeptideType &peptide ,
+                                MassIt spectrumFirst ,
+                                MassIt spectrumLast )
+{
+    assert( std::is_sorted( spectrumFirst , spectrumLast ));
+    std::vector< int > idealSpectrum =
+            theoriticalLinearSpectrum( peptide.cbegin() , peptide.cend());
+    int score = 0 ;
+    for( auto idealIt = idealSpectrum.cbegin() , expIt = spectrumFirst ;
+         idealIt != idealSpectrum.cend() && expIt != spectrumLast ;  )
+        if( *idealIt == *expIt )
+        {
+            ++score;
+            ++idealIt;
+            ++expIt;
+        }
+        else if( *idealIt < *expIt )
+            ++idealIt;
+        else
+            ++expIt;
+    return score;
+}
+
+template< typename ElementIt >
+std::vector< ElementIt::value_type >
+turnpikeProblem( ElementIt collectionFirst , ElementIt collectionLast )
+{
+    std::vector< ElementIt::value_type > differences;
+    for( auto it1 = collectionFirst ; it1 != collectionLast ; ++it1)
+        for( auto it2 = collectionFirst ; it2 != collectionLast ; ++it2)
+            differences.push_back( *it2 - *it1 );
+    std::sort( differences.begin() , differences.end());
+    return differences;
+}
+
+
 }
 }
 
