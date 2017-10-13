@@ -19,7 +19,21 @@ mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=<Release|Debug>..
 make -j4
-make install
+```
+
+* Running tests: 
+```
+./src/test/tests
+```
+
+* Running individual algorithms:
+```
+cd ./src/app
+./<executable> <input-file>
+```
+OR  
+```
+<other-stdout-executable> | ./<executable>
 ```
 
 ## Author 
