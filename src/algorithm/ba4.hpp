@@ -463,10 +463,10 @@ int scoreLinearPeptideSpectrum( const PeptideType &peptide ,
 }
 
 template< typename ElementIt >
-std::vector< ElementIt::value_type >
+std::vector< typename ElementIt::value_type >
 turnpikeProblem( ElementIt collectionFirst , ElementIt collectionLast )
 {
-    std::vector< ElementIt::value_type > differences;
+    std::vector< typename ElementIt::value_type > differences;
     for( auto it1 = collectionFirst ; it1 != collectionLast ; ++it1)
         for( auto it2 = collectionFirst ; it2 != collectionLast ; ++it2)
             differences.push_back( *it2 - *it1 );
